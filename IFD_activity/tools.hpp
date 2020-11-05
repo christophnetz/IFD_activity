@@ -85,8 +85,50 @@ std::vector<std::pair<double, int> > getActTable(std::vector<ind>& pop,
 
 }
 
+std::vector<double> meanSd(std::vector<int> timeVec)
+{
+    double sum = static_cast<double> (std::accumulate(timeVec.begin(), timeVec.end(), 0.0));
+
+    double mean = sum / static_cast<double>(timeVec.size());
+
+    double sSquare;
+    for (size_t it = 0; it < timeVec.size(); it++) {
+        sSquare += pow(static_cast<double>(timeVec[it]) - mean, 2);
+    }
+    double sd = sSquare / (static_cast<double>(timeVec.size() - 1));
+
+    return std::vector<double> {mean, sd};
+}
+
+// fun print time to ifd
+void printTimeIfd(std::vector<double> ttIfdSummary,
+    const int gen,
+    std::vector<std::string> outpath) {
+    std::ofstream rnormOfs;
+    // std::cout << "data path = " << outpath[0] + outpath[1] << "\n";
+
+    // check if okay
+    std::ifstream f(outpath[0] + outpath[1] + "_ttifd.csv");
+    // if (!f.good()) {
+    //     std::cout << "data path " << outpath[0] + outpath[1] << " good to write\n";
+    // }
+    // write column names
+    rnormOfs.open(outpath[0] + outpath[1] + "_ttifd.csv",
+        std::ofstream::out | std::ofstream::app);
+
+    if (gen == 0) {
+        rnormOfs << "gen,ttifd_mean,ttifd_sd\n";
+    }
+
+    rnormOfs << gen << ","
+             << ttIfdSummary[0] << ","
+             << ttIfdSummary[1] << "\n";
+
+    rnormOfs.close();
+}
+
 // print summary activity
-void printSummaryMass(std::vector<ind>& pop,
+void printSummaryAct(std::vector<ind>& pop,
     const int gen,
     const double valRound,
     std::vector<std::string> outpath) {
