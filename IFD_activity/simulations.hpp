@@ -10,7 +10,7 @@
 #include "tools.hpp"
 
 /// functions to check IFD
-bool check_IFD(const std::vector<ind>& pop, const std::vector < std::vector<double>>& landscape, const std::vector<std::vector<int>>& presence) {
+bool check_IFD(const std::vector<ind>& pop, const std::vector < std::vector<double> >& landscape, const std::vector<std::vector<int> >& presence) {
 
     for (size_t p = 0; p < pop.size(); ++p) {
         double present_intake = landscape[pop[p].xpos][pop[p].ypos] / static_cast<double> (presence[pop[p].xpos][pop[p].ypos]);
@@ -28,7 +28,7 @@ bool check_IFD(const std::vector<ind>& pop, const std::vector < std::vector<doub
     return true;
 }
 
-double count_IFD(const std::vector<ind>& pop, const std::vector < std::vector<double>>& landscape, const std::vector<std::vector<int>>& presence) {
+double count_IFD(const std::vector<ind>& pop, const std::vector < std::vector<double> >& landscape, const std::vector<std::vector<int> >& presence) {
 
     size_t count = pop.size();
     size_t p = 0;
