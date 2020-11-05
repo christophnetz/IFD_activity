@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <algorithm>
 #include <string>
 #include "parameters.hpp"
 #include "agents.hpp"
@@ -50,39 +51,20 @@ label:
     return static_cast<double>(count) / pop.size();
 }
 
-void doSimulation(std::vector<std::string> cliArgs)
+// main fun to evolve pop
+void evolvePop(
+    const int g_start,
+    const int genmax, const double run_time,
+    const int num_scenes, const double f_cost,
+    const std::string rep_number,
+    std::vector<ind> & pop,
+    std::vector<std::vector<double> > &landscape,
+    std::vector<std::string> outputPath) 
 {
-    // process arguments
-    const int popDensity = std::stoi(cliArgs[1]);
-    const int genmax = std::stoi(cliArgs[2]);
-    const double run_time = std::stod(cliArgs[3]);
-    const int num_scenes = std::stoi(cliArgs[4]);
-    const double f_cost = std::stod(cliArgs[5]);
-    const std::string rep_number = cliArgs[6];
-    
-    // make landscape
-	std::vector<std::vector<double> > landscape(dims, std::vector<double>(dims, 1.0));
-	//landscape_setup(landscape);
-
-    // make population flexible on density and landscape size
-    // does not handle densities between 0 and 1 well
-    const int popSize = dims * dims * popDensity;
-    std::vector<ind> pop(popSize);
-
-    // identify the output path and print to the lookup table
-    unsigned seed =
-        static_cast<unsigned>(std::chrono::high_resolution_clock::now().time_since_epoch().count());
-    std::clog << "random_seed : " << seed << '\n';
-    rng.seed(seed);
-
-    const std::vector<std::string> outputPath = identifyOutpath(
-        popDensity, run_time, num_scenes, f_cost, rep_number, std::to_string(seed)
-    );
-
     // begin looping over gens
-    for (int g = 0; g < genmax; ++g) {
+    for (int g = g_start; g < genmax; ++g) {
 
-        std::vector<double> activities (popSize); // activity levels of agents
+        std::vector<double> activities(pop.size()); // activity levels of agents
         std::vector<std::vector<int> > presence(dims, std::vector<int>(dims, 0)); // agent counts
 
         // populate activity vec and presence grid
@@ -94,7 +76,7 @@ void doSimulation(std::vector<std::string> cliArgs)
         // distribution of mutations? unclear
         rndutils::mutable_discrete_distribution<int, rndutils::all_zero_policy_uni> rdist;
         rdist.mutate(activities.cbegin(), activities.cend()); // add some mutations? unclear
-        
+
         // sum activity levels and make exponential distr
         double total_act = std::accumulate(activities.begin(), activities.end(), 0.0);
         std::exponential_distribution<double> event_dist(total_act);
@@ -104,7 +86,7 @@ void doSimulation(std::vector<std::string> cliArgs)
 
         // run over some N scenes, default 10
         for (int scenes = 0; scenes < num_scenes; ++scenes) {
-            
+
             // re-init landscape
             landscape_setup(landscape);
 
@@ -150,5 +132,71 @@ void doSimulation(std::vector<std::string> cliArgs)
 
         reproduction(pop, run_time, f_cost);
     }
+}
+
+// fun to subsample pop size to a different density
+void reduceDensity(std::vector<ind> & pop, const int newDensity)
+{
+    const int newPopSize = dims * dims * newDensity;
+    
+    // make an int vector of ids and shuffle it
+    std::vector<int> vecShuffle (pop.size());
+    for (size_t ii = 0; ii < pop.size(); ++ii)
+    {
+        vecShuffle[ii] = static_cast<int>(ii);
+    }
+    std::shuffle(vecShuffle.begin(), vecShuffle.end(), rng);
+
+    // select the first newPopSize agents
+    std::vector<ind> newPop(newPopSize);
+    for (size_t ii = 0; ii < static_cast<size_t> (newPopSize); ++ii)
+    {
+        newPop[ii] = pop[vecShuffle[ii]];
+    }
+
+    // swap pops
+    assert(newPop.size() < pop.size());
+
+    std::swap(pop, newPop);
+    newPop.clear();
+}
+
+void doSimulation(std::vector<std::string> cliArgs)
+{
+    // process arguments
+    const int popDensity = std::stoi(cliArgs[1]);
+    const int genmax = std::stoi(cliArgs[2]);
+    const double run_time = std::stod(cliArgs[3]);
+    const int num_scenes = std::stoi(cliArgs[4]);
+    const double f_cost = std::stod(cliArgs[5]);
+    const double newDensity = std::stoi(cliArgs[6]);
+    const std::string rep_number = cliArgs[7];
+    
+    // make landscape
+	std::vector<std::vector<double> > landscape(dims, std::vector<double>(dims, 1.0));
+	//landscape_setup(landscape);
+
+    // make population flexible on density and landscape size
+    // does not handle densities between 0 and 1 well
+    const int popSize = dims * dims * popDensity;
+    std::vector<ind> pop(popSize);
+
+    // identify the output path and print to the lookup table
+    unsigned seed =
+        static_cast<unsigned>(std::chrono::high_resolution_clock::now().time_since_epoch().count());
+    std::clog << "random_seed : " << seed << '\n';
+    rng.seed(seed);
+
+    const std::vector<std::string> outputPath = identifyOutpath(
+        popDensity, run_time, num_scenes, f_cost, rep_number, std::to_string(seed)
+    );
+
+    // run the population at original density
+    evolvePop(0, genmax, run_time, num_scenes, f_cost, rep_number, pop, landscape, outputPath);
+
+    reduceDensity(pop, newDensity);
+
+    // run at new density
+    evolvePop(genmax, genmax + genmax, run_time, num_scenes, f_cost, rep_number, pop, landscape, outputPath);
 
 }
