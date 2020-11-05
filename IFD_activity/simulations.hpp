@@ -66,7 +66,7 @@ void doSimulation(std::vector<std::string> cliArgs)
 
     // make population flexible on density and landscape size
     // does not handle densities between 0 and 1 well
-    const int popSize = dims * popDensity;
+    const int popSize = dims * dims * popDensity;
     std::vector<ind> pop(popSize);
 
     // identify the output path and print to the lookup table
