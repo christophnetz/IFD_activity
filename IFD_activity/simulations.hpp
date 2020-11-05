@@ -235,7 +235,7 @@ void doSimulation(std::vector<std::string> cliArgs)
     rng.seed(seed);
 
     const std::vector<std::string> outputPath = identifyOutpath(
-        popDensity, run_time, num_scenes, f_cost, rep_number, std::to_string(seed)
+        popDensity, run_time, num_scenes, f_cost, rep_number, std::to_string(seed), newDensity
     );
 
     // run the population at original density

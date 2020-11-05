@@ -12,7 +12,8 @@
 std::vector<std::string> identifyOutpath(const int pop_density,
     const double run_time,
     const int num_scenes, const double f_cost, const std::string rep_id,
-    const std::string idRun) {
+    const std::string idRun,
+    const int newDensity) {
     
     // assumes the data folder exists
     std::string path = "data/";
@@ -28,13 +29,14 @@ std::vector<std::string> identifyOutpath(const int pop_density,
     std::ifstream f2(summary_out.c_str());
     if (!f2.good()) {
         summary_ofs.open(summary_out, std::ofstream::out);
-        summary_ofs << "filename,pop_density,run_time,n_scenes,f_cost,rep_id\n";
+        summary_ofs << "filename,pop_density,newDensity,run_time,n_scenes,f_cost,rep_id\n";
         summary_ofs.close();
     }
     // append if not
     summary_ofs.open(summary_out, std::ofstream::out | std::ofstream::app);
     summary_ofs << idRun << ","
         << pop_density << ","
+        << newDensity << ","
         << run_time << ","
         << num_scenes << ","
         << f_cost << ","
