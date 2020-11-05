@@ -218,6 +218,8 @@ void doSimulation(std::vector<std::string> cliArgs)
     const double f_cost = std::stod(cliArgs[5]);
     const double newDensity = std::stoi(cliArgs[6]);
     const std::string rep_number = cliArgs[7];
+
+    assert(newDensity < popDensity);
     
     // make landscape
 	std::vector<std::vector<double> > landscape(dims, std::vector<double>(dims, 1.0));
