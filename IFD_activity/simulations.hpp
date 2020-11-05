@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include <string>
+#include <cmath>
 #include "parameters.hpp"
 #include "agents.hpp"
 #include "landscape.hpp"
@@ -10,46 +11,77 @@
 #include "tools.hpp"
 
 /// functions to check IFD
-bool check_IFD(const std::vector<ind>& pop, const std::vector < std::vector<double> >& landscape, const std::vector<std::vector<int> >& presence) {
+//bool check_IFD(const std::vector<ind>& pop, const std::vector < std::vector<double> >& landscape, const std::vector<std::vector<int> >& presence) {
+//
+//    for (size_t p = 0; p < pop.size(); ++p) {
+//        double present_intake = landscape[pop[p].xpos][pop[p].ypos] / static_cast<double> (presence[pop[p].xpos][pop[p].ypos]);
+//
+//        for (int i = 0; i < dims; ++i) {
+//            for (int j = 0; j < dims; ++j) {
+//                if (present_intake < landscape[i][j] / (static_cast<double> (presence[i][j]) + 1.0)) {
+//                    return false;
+//                }
+//            }
+//        }
+//
+//
+//    }
+//    return true;
+//}
 
-    for (size_t p = 0; p < pop.size(); ++p) {
-        double present_intake = landscape[pop[p].xpos][pop[p].ypos] / static_cast<double> (presence[pop[p].xpos][pop[p].ypos]);
+// function to check IFD
+std::pair<bool, int> checkPCintake(const std::vector < std::vector<double> >& landscape,
+    const std::vector<std::vector<int> >& presence)
+{
+    // vecs potential and realised intake
+    std::vector<double> intakeReal (dims * dims), intakePot (dims * dims);
 
-        for (int i = 0; i < dims; ++i) {
-            for (int j = 0; j < dims; ++j) {
-                if (present_intake < landscape[i][j] / (static_cast<double> (presence[i][j]) + 1.0)) {
-                    return false;
-                }
-            }
+    size_t counter = 0;
+    for (size_t i = 0; i < dims; ++i) {
+        for (size_t j = 0; j < dims; ++j) {
+            intakeReal[counter] = landscape[i][j] / static_cast<double>(presence[i][j]);
+            intakePot[counter] = landscape[i][j] / (static_cast<double>(presence[i][j]) + 1.0);
+            ++counter;
         }
-
-
     }
-    return true;
+    // sort and compare
+    std::sort(intakeReal.begin(), intakeReal.end());
+    std::sort(intakePot.begin(), intakePot.end());
+
+    // populate pair
+    std::pair<bool, int> ifdMeasure;
+    const double maxInPotential = intakePot[intakePot.size() - 1];
+    ifdMeasure.first =  maxInPotential < intakeReal[0]; // if maxInPotential is greater than min intake real IFD is not reached; TRUE indicates success
+    ifdMeasure.second = static_cast<int> (std::count_if(intakeReal.begin(), intakeReal.end(), [maxInPotential](double pcHere) {
+        return pcHere < maxInPotential;
+        }));
+    return ifdMeasure;
 }
 
-double count_IFD(const std::vector<ind>& pop, const std::vector < std::vector<double> >& landscape, const std::vector<std::vector<int> >& presence) {
-
-    size_t count = pop.size();
-    size_t p = 0;
-label:
-    for (; p < pop.size(); ++p) {
-        double present_intake = landscape[pop[p].xpos][pop[p].ypos] / static_cast<double> (presence[pop[p].xpos][pop[p].ypos]);
-
-        for (int i = 0; i < dims; ++i) {
-            for (int j = 0; j < dims; ++j) {
-                if (present_intake < landscape[i][j] / (static_cast<double> (presence[i][j]) + 1.0)) {
-                    --count;
-                    ++p;
-                    goto label;
-                }
-            }
-        }
-
-
-    }
-    return static_cast<double>(count) / pop.size();
-}
+//double count_IFD(const std::vector<ind>& pop, 
+//    const std::vector < std::vector<double> >& landscape, 
+//    const std::vector<std::vector<int> >& presence) {
+//
+//    size_t count = pop.size();
+//    size_t p = 0;
+//label:
+//    for (; p < pop.size(); ++p) {
+//        double present_intake = landscape[pop[p].xpos][pop[p].ypos] / static_cast<double> (presence[pop[p].xpos][pop[p].ypos]);
+//
+//        for (int i = 0; i < dims; ++i) {
+//            for (int j = 0; j < dims; ++j) {
+//                if (present_intake < landscape[i][j] / (static_cast<double> (presence[i][j]) + 1.0)) {
+//                    --count;
+//                    ++p;
+//                    goto label;
+//                }
+//            }
+//        }
+//
+//
+//    }
+//    return static_cast<double>(count) / pop.size();
+//}
 
 // main fun to evolve pop
 void evolvePop(
@@ -61,8 +93,15 @@ void evolvePop(
     std::vector<std::vector<double> > &landscape,
     std::vector<std::string> outputPath) 
 {
+
+    // tabulate time to ifd (genmax * 3 structure)
+    std::vector<std::vector<double> > ifdTime (genmax);
+
     // begin looping over gens
     for (int g = g_start; g < genmax; ++g) {
+
+        // get time to ifd
+        std::vector<int> ttIfd(num_scenes);
 
         std::vector<double> activities(pop.size()); // activity levels of agents
         std::vector<std::vector<int> > presence(dims, std::vector<int>(dims, 0)); // agent counts
@@ -80,9 +119,6 @@ void evolvePop(
         // sum activity levels and make exponential distr
         double total_act = std::accumulate(activities.begin(), activities.end(), 0.0);
         std::exponential_distribution<double> event_dist(total_act);
-
-        double ifd_prop = 0.0; // p pop in ifd
-        double total_ttIFD = 0.0; // time to ifd
 
         // run over some N scenes, default 10
         for (int scenes = 0; scenes < num_scenes; ++scenes) {
@@ -108,18 +144,27 @@ void evolvePop(
                     ++eat_t;
                 }
 
-                //if (!IFD_reached) {
                 id = rdist(rng); // pick an agent to move
                 pop[id].move(landscape, presence);
-                //IFD_reached = check_IFD(pop, landscape, presence);
-                //time_to_IFD = time;
-              //}
-
-              //cout << time << "\t" << IFD_reached << "\t" << endl;
+                
+                // check ifd
+                std::pair<bool, int> pcIntakeChecker = checkPCintake(landscape, presence);
+                // add time to ifd vector
+                if (pcIntakeChecker.first) {
+                    ttIfd.push_back(time);
+                }
             }
             //prop idf fulfilled
             //ifd_prop += count_IFD(pop, landscape, presence);
             //total_ttIFD += time_to_IFD;
+        }
+        std::vector<double> ttifdSummary(2);
+        // get gen-wise mean and sd ttifd
+        if (ttIfd.size() > 0) {
+            ttifdSummary = meanSd(ttIfd);
+        }
+        else {
+            ttifdSummary = { -99.0, -99.0 };
         }
 
         // print summary every 100 gens
@@ -127,7 +172,8 @@ void evolvePop(
             if (g % (genmax / 10) == 0) {
                 std::cout << "gen = " << g << "\n";
             }
-            printSummaryMass(pop, g, 0.001, outputPath);
+            printSummaryAct(pop, g, 0.001, outputPath);
+            printTimeIfd(ttifdSummary, g, outputPath);
         }
 
         reproduction(pop, run_time, f_cost);
@@ -159,6 +205,7 @@ void reduceDensity(std::vector<ind> & pop, const int newDensity)
 
     std::swap(pop, newPop);
     newPop.clear();
+    std::cout << "pop density reduced\n";
 }
 
 void doSimulation(std::vector<std::string> cliArgs)
