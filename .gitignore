@@ -1,5 +1,6 @@
 /x64
 /IFD_activity/x64
+Release
 
 # Prerequisites
 *.d
@@ -33,3 +34,7 @@
 *.exe
 *.out
 *.app
+.Rproj.user
+
+# vscode and vs files
+.vs
