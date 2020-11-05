@@ -35,6 +35,7 @@ Release
 *.out
 *.app
 .Rproj.user
+.Rhistory
 
 # vscode and vs files
 .vs
