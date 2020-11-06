@@ -13,8 +13,15 @@ lookup <- fread("x64/Release/data/lookup.csv")
 data <- lapply(data_files, fread)
 
 # make plots
-plots <- lapply(data, function(df) {
+plots <- Map(function(df, d1, d2) {
   ggplot(df)+
-    geom_tile(aes(gen, actRound, fill = count))+
-    scale_fill_viridis_c()
-})
+    geom_tile(aes(gen, actRound, fill = count),
+              show.legend = F)+
+    scale_fill_viridis_c(option = "C", direction = -1,
+                         limits = c(0, 200),
+                         na.value = "blue")+
+    theme_void()+
+    labs(title = glue::glue('density = {d1}, new density = {d2}'))
+}, data, lookup$pop_density, lookup$newDensity)
+
+patchwork::wrap_plots(plots)
