@@ -5,9 +5,9 @@ library(stringr)
 library(tidyr)
 library(dplyr)
 
-pop_density <- c(2, 5)
-new_density <- c(1, 2)
-genmax <- c(50000L)
+pop_density <- c(2, 5, 7, 9)
+new_density <- pop_density - 1
+genmax <- c(20000L)
 run_time <- c(10)
 num_scenes <- c(10L)
 f_cost <- c(0.5)
@@ -25,7 +25,7 @@ data_param <- crossing(
 )
 
 # filter
-data_param <- filter(data_param, pop_density > new_density)
+data_param <- filter(data_param, pop_density >= new_density)
 
 # prepare lines
 lines <- glue_data(
