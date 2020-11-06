@@ -87,15 +87,15 @@ std::vector<std::pair<double, int> > getActTable(std::vector<ind>& pop,
 
 }
 
-std::vector<double> meanSd(std::vector<int> timeVec)
+std::vector<double> meanSd(std::vector<double> timeVec)
 {
     double sum = static_cast<double> (std::accumulate(timeVec.begin(), timeVec.end(), 0.0));
 
     double mean = sum / static_cast<double>(timeVec.size());
 
-    double sSquare;
+    double sSquare = 0.0;
     for (size_t it = 0; it < timeVec.size(); it++) {
-        sSquare += pow(static_cast<double>(timeVec[it]) - mean, 2);
+        sSquare += pow(timeVec[it] - mean, 2);
     }
     double sd = sSquare / (static_cast<double>(timeVec.size() - 1));
 
