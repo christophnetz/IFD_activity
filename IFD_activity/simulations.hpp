@@ -151,7 +151,7 @@ void evolvePop(
                 pop[id].move(landscape, presence);
                 
                 // check for ifd when time exceeds counter time by 0.5
-                if (time - ifdCheckTime >= 0.05) {
+                if (time - ifdCheckTime >= 0.5) {
                     ifdCheckTime = time;
                     // check ifd
                     std::pair<bool, int> pcIntakeChecker = checkPCintake(landscape, presence);
