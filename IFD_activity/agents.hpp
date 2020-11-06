@@ -10,7 +10,7 @@ struct ind {
 
     ind() {
         food = 0.0;
-        act = std::uniform_real_distribution<double>(0.4, 0.6)(rng);
+        act = std::uniform_real_distribution<double>(0.1, 0.9)(rng);
         xpos = std::uniform_int_distribution<int>(0, dims - 1)(rng);
         ypos = std::uniform_int_distribution<int>(0, dims - 1)(rng);
 
