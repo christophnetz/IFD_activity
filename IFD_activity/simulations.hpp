@@ -101,7 +101,7 @@ void evolvePop(
     for (int g = g_start; g < genmax; ++g) {
 
         // get time to ifd
-        std::vector<int> ttIfd(num_scenes);
+        std::vector<double> ttIfd;
 
         std::vector<double> activities(pop.size()); // activity levels of agents
         std::vector<std::vector<int> > presence(dims, std::vector<int>(dims, 0)); // agent counts
@@ -132,6 +132,9 @@ void evolvePop(
             bool IFD_reached = false;
             double time_to_IFD = 0.0;
 
+            // counter for ifd checking
+            double ifdCheckTime = time;
+
             // gillespie loop here?
             for (; time < run_time; ) {
                 //cout << time << "\n";
@@ -147,12 +150,23 @@ void evolvePop(
                 id = rdist(rng); // pick an agent to move
                 pop[id].move(landscape, presence);
                 
-                // check ifd
-                std::pair<bool, int> pcIntakeChecker = checkPCintake(landscape, presence);
-                // add time to ifd vector
-                if (pcIntakeChecker.first) {
-                    ttIfd.push_back(time);
+                // check for ifd when time exceeds counter time by 0.5
+                if (time - ifdCheckTime >= 0.05) {
+                    ifdCheckTime = time;
+                    // check ifd
+                    std::pair<bool, int> pcIntakeChecker = checkPCintake(landscape, presence);
+                    // add time to ifd vector
+                    if (pcIntakeChecker.first) {
+                        ttIfd.push_back(time);
+                    }
                 }
+                
+            }
+            // check one final time
+            std::pair<bool, int> pcIntakeChecker = checkPCintake(landscape, presence);
+            // add time to ifd vector
+            if (pcIntakeChecker.first) {
+                ttIfd.push_back(run_time);
             }
             //prop idf fulfilled
             //ifd_prop += count_IFD(pop, landscape, presence);
@@ -164,7 +178,7 @@ void evolvePop(
             ttifdSummary = meanSd(ttIfd);
         }
         else {
-            ttifdSummary = { -99.0, -99.0 };
+            ttifdSummary = { NAN, NAN };
         }
 
         // print summary every 100 gens
@@ -216,7 +230,7 @@ void doSimulation(std::vector<std::string> cliArgs)
     const double run_time = std::stod(cliArgs[3]);
     const int num_scenes = std::stoi(cliArgs[4]);
     const double f_cost = std::stod(cliArgs[5]);
-    const double newDensity = std::stoi(cliArgs[6]);
+    const int newDensity = std::stoi(cliArgs[6]);
     const std::string rep_number = cliArgs[7];
 
     assert(newDensity < popDensity);
