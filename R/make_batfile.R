@@ -5,12 +5,12 @@ library(stringr)
 library(tidyr)
 library(dplyr)
 
-pop_density <- c(2, 5, 7, 9)
+pop_density <- c(3, 5, 7, 9)
 new_density <- pop_density - 1
-genmax <- c(20000L)
-run_time <- c(10)
+genmax <- c(10000L)
+run_time <- c(25)
 num_scenes <- c(10L)
-f_cost <- c(0.5)
+f_cost <- c(0.25, 0.75)
 n_replicates <- 3
 
 # make data
