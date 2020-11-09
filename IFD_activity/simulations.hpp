@@ -10,25 +10,6 @@
 #include "rndutils.hpp"
 #include "tools.hpp"
 
-/// functions to check IFD
-//bool check_IFD(const std::vector<ind>& pop, const std::vector < std::vector<double> >& landscape, const std::vector<std::vector<int> >& presence) {
-//
-//    for (size_t p = 0; p < pop.size(); ++p) {
-//        double present_intake = landscape[pop[p].xpos][pop[p].ypos] / static_cast<double> (presence[pop[p].xpos][pop[p].ypos]);
-//
-//        for (int i = 0; i < dims; ++i) {
-//            for (int j = 0; j < dims; ++j) {
-//                if (present_intake < landscape[i][j] / (static_cast<double> (presence[i][j]) + 1.0)) {
-//                    return false;
-//                }
-//            }
-//        }
-//
-//
-//    }
-//    return true;
-//}
-
 // function to check IFD
 std::pair<bool, int> checkPCintake(const std::vector < std::vector<double> >& landscape,
     const std::vector<std::vector<int> >& presence)
@@ -58,36 +39,26 @@ std::pair<bool, int> checkPCintake(const std::vector < std::vector<double> >& la
     return ifdMeasure;
 }
 
-//double count_IFD(const std::vector<ind>& pop, 
-//    const std::vector < std::vector<double> >& landscape, 
-//    const std::vector<std::vector<int> >& presence) {
-//
-//    size_t count = pop.size();
-//    size_t p = 0;
-//label:
-//    for (; p < pop.size(); ++p) {
-//        double present_intake = landscape[pop[p].xpos][pop[p].ypos] / static_cast<double> (presence[pop[p].xpos][pop[p].ypos]);
-//
-//        for (int i = 0; i < dims; ++i) {
-//            for (int j = 0; j < dims; ++j) {
-//                if (present_intake < landscape[i][j] / (static_cast<double> (presence[i][j]) + 1.0)) {
-//                    --count;
-//                    ++p;
-//                    goto label;
-//                }
-//            }
-//        }
-//
-//
-//    }
-//    return static_cast<double>(count) / pop.size();
-//}
+// update predation matrix
+void updatePredation (std::vector<std::vector<double> > &predation,
+    std::vector<std::vector<int> > & presence,
+    const double basePred)
+{
+    for(size_t i = 0; i < presence.size(); ++i)
+    {
+        for(size_t j = 0; j < presence.size(); ++j)
+        {
+            predation[i][j] = basePred / (1.0 + static_cast<double>(presence[i][j]));
+        }
+    }
+}
 
 // main fun to evolve pop
 void evolvePop(
     const int g_start,
     const int genmax, const double run_time,
     const int num_scenes, const double f_cost,
+    const double basePred,
     const std::string rep_number,
     std::vector<ind> & pop,
     std::vector<std::vector<double> > &landscape,
@@ -105,6 +76,10 @@ void evolvePop(
 
         std::vector<double> activities(pop.size()); // activity levels of agents
         std::vector<std::vector<int> > presence(dims, std::vector<int>(dims, 0)); // agent counts
+        std::vector<std::vector<double> > predation(dims, std::vector<double>(dims, basePred)); // predation cost
+
+        // update predation
+        updatePredation(predation, presence, basePred);
 
         // populate activity vec and presence grid
         for (size_t i = 0; i < pop.size(); ++i) {
@@ -135,7 +110,7 @@ void evolvePop(
             // counter for ifd checking
             double ifdCheckTime = time;
 
-            // gillespie loop here?
+            // gillespie loop here
             for (; time < run_time; ) {
                 //cout << time << "\n";
                 time += event_dist(rng);
@@ -152,6 +127,13 @@ void evolvePop(
                 
                 // check for ifd when time exceeds counter time by 0.5
                 if (time - ifdCheckTime >= 0.5) {
+
+                    // all agents pay a cost of predation
+                    sufferPredation(pop, predation);
+
+                    // update predation
+                    updatePredation(predation, presence, basePred);
+
                     ifdCheckTime = time;
                     // check ifd
                     std::pair<bool, int> pcIntakeChecker = checkPCintake(landscape, presence);
@@ -187,6 +169,7 @@ void evolvePop(
                 std::cout << "gen = " << g << "\n";
             }
             printSummaryAct(pop, g, 0.001, outputPath);
+            printSummarySoc(pop, g, 0.001, outputPath);
             printTimeIfd(ttifdSummary, g, outputPath);
         }
 
@@ -231,7 +214,8 @@ void doSimulation(std::vector<std::string> cliArgs)
     const int num_scenes = std::stoi(cliArgs[4]);
     const double f_cost = std::stod(cliArgs[5]);
     const int newDensity = std::stoi(cliArgs[6]);
-    const std::string rep_number = cliArgs[7];
+    const double basePred = std::stod(cliArgs[7]);
+    const std::string rep_number = cliArgs[8];
 
     assert(newDensity < popDensity);
     
@@ -251,15 +235,15 @@ void doSimulation(std::vector<std::string> cliArgs)
     rng.seed(seed);
 
     const std::vector<std::string> outputPath = identifyOutpath(
-        popDensity, run_time, num_scenes, f_cost, rep_number, std::to_string(seed), newDensity
+        popDensity, run_time, num_scenes, f_cost, basePred, rep_number, std::to_string(seed), newDensity
     );
 
     // run the population at original density
-    evolvePop(0, genmax, run_time, num_scenes, f_cost, rep_number, pop, landscape, outputPath);
+    evolvePop(0, genmax, run_time, num_scenes, f_cost, basePred, rep_number, pop, landscape, outputPath);
 
     reduceDensity(pop, newDensity);
 
     // run at new density
-    evolvePop(genmax, genmax + genmax, run_time, num_scenes, f_cost, rep_number, pop, landscape, outputPath);
+    evolvePop(genmax, genmax + genmax, run_time, num_scenes, f_cost, basePred, rep_number, pop, landscape, outputPath);
 
 }
