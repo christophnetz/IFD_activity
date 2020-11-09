@@ -11,7 +11,9 @@
 /// construct agent output filename
 std::vector<std::string> identifyOutpath(const int pop_density,
     const double run_time,
-    const int num_scenes, const double f_cost, const std::string rep_id,
+    const int num_scenes, const double f_cost, 
+    const double basePred,
+    const std::string rep_id,
     const std::string idRun,
     const int newDensity) {
     
@@ -29,7 +31,7 @@ std::vector<std::string> identifyOutpath(const int pop_density,
     std::ifstream f2(summary_out.c_str());
     if (!f2.good()) {
         summary_ofs.open(summary_out, std::ofstream::out);
-        summary_ofs << "filename,pop_density,newDensity,run_time,n_scenes,f_cost,rep_id\n";
+        summary_ofs << "filename,pop_density,newDensity,run_time,n_scenes,f_cost,basePred,rep_id\n";
         summary_ofs.close();
     }
     // append if not
@@ -40,6 +42,7 @@ std::vector<std::string> identifyOutpath(const int pop_density,
         << run_time << ","
         << num_scenes << ","
         << f_cost << ","
+        << basePred << ","
         << rep_id << "\n";
     summary_ofs.close();
 
@@ -56,7 +59,7 @@ std::vector<std::pair<double, int> > getActTable(std::vector<ind>& pop,
     // round to the nearest multiple of massRound
     for (size_t p_i = 0; p_i < pop.size(); ++p_i)
     {
-        popAct[p_i] = pop[p_i].act;
+        popAct[p_i] = pop[p_i].soc;
     }
     // round to the nearest multiple of massRound
     for (size_t p_i = 0; p_i < popAct.size(); ++p_i)
@@ -87,17 +90,58 @@ std::vector<std::pair<double, int> > getActTable(std::vector<ind>& pop,
 
 }
 
-std::vector<double> meanSd(std::vector<double> timeVec)
+// tabulate sociability in increments
+std::vector<std::pair<double, int> > getSocTable(std::vector<ind>& pop,
+    const double valRound)
 {
-    double sum = static_cast<double> (std::accumulate(timeVec.begin(), timeVec.end(), 0.0));
+    // collect masses
+    std::vector<double> popSoc(pop.size());
 
-    double mean = sum / static_cast<double>(timeVec.size());
+    // round to the nearest multiple of massRound
+    for (size_t p_i = 0; p_i < pop.size(); ++p_i)
+    {
+        popSoc[p_i] = pop[p_i].soc;
+    }
+    // round to the nearest multiple of massRound
+    for (size_t p_i = 0; p_i < popSoc.size(); ++p_i)
+    {
+        popSoc[p_i] = round(popSoc[p_i] / valRound) * valRound;
+    }
+
+    // make a copy
+    std::vector<double> popSocUnique = popSoc;
+    std::sort(popSocUnique.begin(), popSocUnique.end());
+    popSocUnique.erase(unique(popSocUnique.begin(), popSocUnique.end()),
+        popSocUnique.end());
+
+    // count unique masses in range
+    std::vector<std::pair<double, int> > socTable(popSocUnique.size());
+
+    for (size_t it = 0; it < popSocUnique.size(); ++it)
+    {
+        socTable[it].first = popSocUnique[it];
+        const double thisVal = popSocUnique[it];
+        socTable[it].second = static_cast<int>(std::count_if(popSoc.begin(), popSoc.end(), [thisVal](double f) {
+            return fabs(f - thisVal) < 0.000000001;
+            }));
+    }
+
+    assert(socTable.size() > 0);
+    return socTable;
+
+}
+
+std::vector<double> meanSd(std::vector<double> thisVec)
+{
+    double sum = static_cast<double> (std::accumulate(thisVec.begin(), thisVec.end(), 0.0));
+
+    double mean = sum / static_cast<double>(thisVec.size());
 
     double sSquare = 0.0;
-    for (size_t it = 0; it < timeVec.size(); it++) {
-        sSquare += pow(timeVec[it] - mean, 2);
+    for (size_t it = 0; it < thisVec.size(); it++) {
+        sSquare += pow(thisVec[it] - mean, 2);
     }
-    double sd = sSquare / (static_cast<double>(timeVec.size() - 1));
+    double sd = sSquare / (static_cast<double>(thisVec.size() - 1));
 
     return std::vector<double> {mean, sd};
 }
@@ -166,3 +210,43 @@ void printSummaryAct(std::vector<ind>& pop,
 
     rnormOfs.close();
 }
+
+// print summary sociability
+void printSummarySoc(std::vector<ind>& pop,
+    const int gen,
+    const double valRound,
+    std::vector<std::string> outpath) {
+    // ofstream
+    std::ofstream rnormOfs;
+    // std::cout << "data path = " << outpath[0] + outpath[1] << "\n";
+
+    // check if okay
+    std::ifstream f(outpath[0] + outpath[1] + "_social.csv");
+    // if (!f.good()) {
+    //     std::cout << "data path " << outpath[0] + outpath[1] << " good to write\n";
+    // }
+    // write column names
+    rnormOfs.open(outpath[0] + outpath[1] + "_social.csv",
+        std::ofstream::out | std::ofstream::app);
+
+    if (gen == 0) {
+        rnormOfs << "gen,socRound,count\n";
+    }
+
+    // get population mass summary stats
+    std::vector<std::pair<double, int> > popSummarySoc = getSocTable(pop, valRound);
+
+    assert(popSummarySoc.size() > 0);
+
+    // print mass counts
+    for (size_t p_i = 0; p_i < popSummarySoc.size(); ++p_i)
+    {
+        rnormOfs << gen << ","
+            << popSummarySoc[p_i].first << ","
+            << popSummarySoc[p_i].second << "\n";
+    }
+
+    rnormOfs.close();
+}
+
+// ends here
