@@ -13,7 +13,7 @@ struct ind {
         act = std::uniform_real_distribution<double>(0.2, 0.8)(rng);
         xpos = std::uniform_int_distribution<int>(0, dims - 1)(rng);
         ypos = std::uniform_int_distribution<int>(0, dims - 1)(rng);
-        soc = std::uniform_real_distribution<double>(-0.2, 0.2)(rng);
+        soc = std::uniform_real_distribution<double>(0.2, 0.8)(rng);
 
     }
 
@@ -37,8 +37,8 @@ void ind::move(const std::vector<std::vector<double>>& landscape,
 
     for (int i = 0; i < dims; ++i) {
         for (int j = 0; j < dims; ++j) {
-            potential_intake = (landscape[i][j] / (static_cast<double> (presence[i][j]) + 1.0)) + 
-                soc * (static_cast<double> (presence[i][j]) + 1.0); // add a weight for other agents
+            potential_intake = (landscape[i][j] / (static_cast<double> (presence[i][j]) + 1.0)) - 
+                soc * (static_cast<double> (presence[i][j]) + 1.0); // add a negative weight for other agents
             if (present_intake < potential_intake) {
                 present_intake = potential_intake;
                 xpos = i;
@@ -85,6 +85,12 @@ void reproduction(std::vector<ind>& pop, const double run_time, const double fco
         if (std::bernoulli_distribution(mutation_rate)(rng)) {
             tmp_pop[i].act += std::normal_distribution<double>(0.0, mutation_shape)(rng);
             tmp_pop[i].act = std::max(tmp_pop[i].act, 0.0);
+        }
+
+        // sociability
+        if (std::bernoulli_distribution(mutation_rate)(rng)) {
+            tmp_pop[i].soc += std::normal_distribution<double>(0.0, mutation_shape)(rng);
+            tmp_pop[i].soc = std::max(tmp_pop[i].soc, 0.0);
         }
     }
 
