@@ -6,11 +6,12 @@ library(tidyr)
 library(dplyr)
 
 pop_density <- c(3, 5, 7, 9)
-new_density <- pop_density - 1
+new_density <- c(3, 5, 7, 9)
 genmax <- c(10000L)
 run_time <- c(25)
 num_scenes <- c(10L)
-f_cost <- c(0.25, 0.75)
+basePred = c(0.2, 0.8)
+f_cost <- c(0.5)
 n_replicates <- 3
 
 # make data
@@ -21,11 +22,14 @@ data_param <- crossing(
     genmax,
     run_time,
     num_scenes,
-    f_cost
+    f_cost,
+    basePred
 )
 
 # filter
-data_param <- filter(data_param, pop_density >= new_density)
+data_param <- filter(data_param, pop_density > new_density)
+
+data_param <- filter(data_param, pop_density == 5)
 
 # prepare lines
 lines <- glue_data(
@@ -37,6 +41,7 @@ lines <- glue_data(
     {num_scenes} \\
     {f_cost} \\
     {new_density} \\
+    {basePred} \\
     {rep_number}')
 
 # write to file

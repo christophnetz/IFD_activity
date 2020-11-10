@@ -59,7 +59,7 @@ std::vector<std::pair<double, int> > getActTable(std::vector<ind>& pop,
     // round to the nearest multiple of massRound
     for (size_t p_i = 0; p_i < pop.size(); ++p_i)
     {
-        popAct[p_i] = pop[p_i].soc;
+        popAct[p_i] = pop[p_i].act;
     }
     // round to the nearest multiple of massRound
     for (size_t p_i = 0; p_i < popAct.size(); ++p_i)

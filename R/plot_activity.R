@@ -24,20 +24,20 @@ data <- Map(function(df, fno) {
 data <- Map(function(df) {
   df <- merge(df, lookup[, c("filename", 
                              "pop_density", "newDensity", "f_cost",
-                             "rep_id")])
+                             "rep_id", "basePred")])
 }, data)
 
 # bind and split by combination
 data <- rbindlist(data)
 
-data <- split(data, by = c("pop_density", "newDensity"))
+data <- split(data, by = c("pop_density", "newDensity", "basePred"))
 
 # count by cut
 data_agg <- lapply(data, function(df){
   df_ <- copy(df)
   df_[, act_cut := cut(actRound, breaks = seq(0, 1, 0.005), include.lowest = T)]
   df_ <- df_[, list(count = .N), by = c("pop_density", "newDensity", "f_cost", 
-                          "rep_id", "act_cut", "gen")]
+                          "rep_id", "act_cut", "gen", "basePred")]
 })
 
 # set dims and gen change
@@ -71,7 +71,7 @@ plots <- Map(function(df) {
 # order by name
 plots <- plots[order(names(plots))]
 
-plots[[10]]
+plots[[1]]
 patchwork::wrap_plots(plots)
 
 ggsave(filename = "figures/fig_activity_heatmap.png")
