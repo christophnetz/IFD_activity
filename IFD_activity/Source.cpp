@@ -11,15 +11,15 @@
 
 using namespace std;
 /// Parameters
-const int dims = 30;
-const int pop_size = 20000;
+const int dims = 20;
+const int pop_size = 10000;
 const int Gmax = 80000;
 const int run_time = 10;//100
 double mutation_rate = 0.01; //0.001
 double mutation_shape = 0.0100;//0.1
 const int num_scenes = 10;//10
-const double fcost = 0.005;
-const string ID_run = "02_6-11";
+const double fcost = 0.0001;
+const string ID_run = "03_29-11";
 
 std::mt19937_64 rng;
 
@@ -27,7 +27,7 @@ struct ind {
 
   ind() {
     food = 0.0;
-    act = uniform_real_distribution<double>(0.15, 0.19)(rng);
+    act = 0.5;// uniform_real_distribution<double>(0.15, 0.19)(rng);
     xpos = uniform_int_distribution<int>(0, dims - 1)(rng);
     ypos = uniform_int_distribution<int>(0, dims - 1)(rng);
 
@@ -108,7 +108,7 @@ label:
 void landscape_setup(vector<vector<double>> & landscape) {
   for (int i = 0; i < dims; ++i) {
     for (int j = 0; j < dims; ++j) {
-      landscape[i][j] = uniform_real_distribution<double>(0.0, 1.0)(rng);
+      landscape[i][j] = uniform_real_distribution<double>(0.5, 1.0)(rng);
     }
   }
 }
@@ -118,7 +118,7 @@ void reproduction(vector<ind> & pop) {
   vector<double> fitness;
 
   for (int i = 0; i < pop.size(); ++i) {
-    fitness.push_back(max(pop[i].food - fcost * pop[i].act * run_time, 0.0));
+    fitness.push_back(max(pop[i].food - fcost * pop[i].act * run_time * num_scenes, 0.0));
   }
 
   rndutils::mutable_discrete_distribution<int, rndutils::all_zero_policy_uni> rdist;
@@ -228,7 +228,7 @@ int main() {
 
     if (g % 10 == 0) {
       ofs1 << g << "\t";
-      for (int q = 0; q < pop.size(); q += 10) {
+      for (int q = 0; q < pop.size(); q += pop.size() / 1000) {
         ofs1 << pop[q].act << "\t";
       }
       ofs1 << "\n";
