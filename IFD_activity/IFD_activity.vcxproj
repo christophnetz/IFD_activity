@@ -124,10 +124,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Source.cpp" />
+    <ClCompile Include="parameter.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="rnd.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cmd_line.h" />
+    <ClInclude Include="parameter.h" />
+    <ClInclude Include="rnd.hpp" />
     <ClInclude Include="rndutils.hpp" />
+    <ClInclude Include="simulation.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="settings\config.ini" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
