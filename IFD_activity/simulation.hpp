@@ -136,7 +136,7 @@ void reproduction(vector<ind>& pop, Param param_) {
 
 void simulation(const Param& param_) {
 
-   
+
   std::ofstream ofs1(param_.outdir + "activities.txt", std::ofstream::out);
   
   std::ofstream os(param_.outdir + "params.txt", std::ofstream::out);
@@ -209,7 +209,7 @@ void simulation(const Param& param_) {
 
     if (g % 10 == 0) {
       ofs1 << g << "\t";
-      for (int q = 0; q < pop.size(); q += pop.size() / 1000) {
+      for (int q = 0; q < pop.size(); q += max(1, static_cast<int>(pop.size() / 1000))) {
         ofs1 << pop[q].act << "\t";
       }
       ofs1 << "\n";
@@ -222,5 +222,6 @@ void simulation(const Param& param_) {
   ofs1.close();
   //ofs2.close();
   cout << "End";
+
 
 }

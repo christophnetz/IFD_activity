@@ -21,7 +21,6 @@ using namespace cine2;
 int main(int argc, const char** argv) {
 
   cmd::cmd_line_parser clp(argc, argv);
-
   try {
 
     auto config = clp.optional_val("config", std::string{});
