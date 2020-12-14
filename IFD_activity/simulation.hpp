@@ -20,12 +20,10 @@ using namespace std;
 
 struct ind {
 
-  ind() {
-    food = 0.0;
-    act = 0.5;
-    xpos = uniform_int_distribution<int>(0, 20 - 1)(rnd::reng);
-    ypos = uniform_int_distribution<int>(0, 20 - 1)(rnd::reng); // fix this
-  }
+  ind() {}
+  ind(int x, int y, double a) : xpos(x), ypos(y), act(a), food(0.0) {}
+
+
 
   void move(const vector<vector<double>>& landscape, vector<vector<int>>& presence);
 
@@ -117,7 +115,12 @@ void reproduction(vector<ind>& pop, Param param_) {
 
   rndutils::mutable_discrete_distribution<int, rndutils::all_zero_policy_uni> rdist;
   rdist.mutate(fitness.cbegin(), fitness.cend());
-  vector<ind> tmp_pop(param_.pop_size);
+
+  vector<ind> tmp_pop;
+  auto pdist = std::uniform_int_distribution<int>(0, param_.dims - 1);
+  for (int i = 0; i < param_.pop_size; ++i) {
+    tmp_pop.emplace_back(pdist(rnd::reng), pdist(rnd::reng), 0.5);
+  }
 
   for (int i = 0; i < pop.size(); ++i) {
     const int ancestor = rdist(rnd::reng);
@@ -152,7 +155,11 @@ void simulation(const Param& param_) {
   }
 
 
-  vector<ind> pop(param_.pop_size);
+  vector<ind> pop;
+  auto pdist = std::uniform_int_distribution<int>(0, param_.dims - 1);
+  for (int i = 0; i < param_.pop_size; ++i) {
+    pop.emplace_back(pdist(rnd::reng), pdist(rnd::reng), 0.5);
+  }
 
   for (int g = 0; g < param_.G; ++g) {
 
