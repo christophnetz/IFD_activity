@@ -97,10 +97,10 @@ label:
   return static_cast<double>(count) / pop.size();
 }
 
-void landscape_setup(vector<vector<double>>& landscape) {
+void landscape_setup(vector<vector<double>>& landscape, const int popsize) {
   for (int i = 0; i < landscape.size(); ++i) {
     for (int j = 0; j < landscape[i].size(); ++j) {
-      landscape[i][j] = uniform_real_distribution<double>(0.5, 1.0)(rnd::reng);
+      landscape[i][j] = uniform_real_distribution<double>(0.5 * popsize / 1000.0, 1.0 * popsize / 1000.0)(rnd::reng);
     }
   }
 }
@@ -180,7 +180,7 @@ void simulation(const Param& param_) {
 
     for (int scenes = 0; scenes < param_.scenes; ++scenes) {
       //cout << "scenes: " << scenes << endl;
-      landscape_setup(landscape);
+      landscape_setup(landscape, param_.pop_size);
 
       double time = 0.0;
       int id;
