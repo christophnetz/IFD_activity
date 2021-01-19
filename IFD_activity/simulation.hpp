@@ -97,6 +97,27 @@ label:
   return static_cast<double>(count) / pop.size();
 }
 
+double intake_variance(const vector<ind>& pop, const vector < vector<double>>& landscape, const vector<vector<int>>& presence) {
+  vector<double> intakes;
+  int p = 0;
+  for (; p < pop.size(); ++p) {
+    //intakes.push_back(landscape[pop[p].xpos][pop[p].ypos] / static_cast<double> (presence[pop[p].xpos][pop[p].ypos]));
+    intakes.push_back(landscape[pop[p].xpos][pop[p].ypos] / static_cast<double> (presence[pop[p].xpos][pop[p].ypos]));
+  }
+
+  double sum = std::accumulate(intakes.begin(), intakes.end(), 0.0);
+  double m = sum / intakes.size();
+
+  double accum = 0.0;
+  std::for_each(intakes.begin(), intakes.end(), [&](const double d) {
+    accum += (d - m) * (d - m);
+    });
+
+  double stdev = sqrt(accum / (intakes.size()));
+
+  return stdev;
+}
+
 void landscape_setup(vector<vector<double>>& landscape, const int popsize) {
   for (int i = 0; i < landscape.size(); ++i) {
     for (int j = 0; j < landscape[i].size(); ++j) {
@@ -141,7 +162,11 @@ void simulation(const Param& param_) {
 
 
   std::ofstream ofs1(param_.outdir + "activities.txt", std::ofstream::out);
-  
+  std::ofstream ofs2(param_.outdir + "ecology.txt", std::ofstream::out);
+
+  ofs2 << "G" << "\t" << "ifd_prop" << "\t" << "time_to_IFD" << "\t" << "sd_intake" << "\t\n";
+
+
   std::ofstream os(param_.outdir + "params.txt", std::ofstream::out);
   stream_parameter(os, param_, "  ", ",\n", "c(", ")");
   os.close();
@@ -177,6 +202,7 @@ void simulation(const Param& param_) {
 
     double ifd_prop = 0.0;
     double total_ttIFD = 0.0;
+    double total_sdintake = 0.0;
 
     for (int scenes = 0; scenes < param_.scenes; ++scenes) {
       //cout << "scenes: " << scenes << endl;
@@ -185,6 +211,8 @@ void simulation(const Param& param_) {
       double time = 0.0;
       int id;
       int eat_t = 0;
+      double it_t = 0.0;
+      double increment = 0.1;
       bool IFD_reached = false;
       double time_to_IFD = 0.0;
 
@@ -200,18 +228,20 @@ void simulation(const Param& param_) {
         }
 
 
-        //if (!IFD_reached) {
-        id = rdist(rnd::reng);
-        pop[id].move(landscape, presence);
-        //IFD_reached = check_IFD(pop, landscape, presence);
-        //time_to_IFD = time;
-      //}
+        if (!IFD_reached & time > it_t) {
+          id = rdist(rnd::reng);
+          pop[id].move(landscape, presence);
+          IFD_reached = check_IFD(pop, landscape, presence);
+          time_to_IFD = time;
+          it_t = floor(time / increment) * increment + increment;
+        }
 
       //cout << time << "\t" << IFD_reached << "\t" << endl;
       }
       //prop idf fulfilled
-      //ifd_prop += count_IFD(pop, landscape, presence);
-      //total_ttIFD += time_to_IFD;
+      ifd_prop += count_IFD(pop, landscape, presence);
+      total_ttIFD += time_to_IFD;
+      total_sdintake += intake_variance(pop, landscape, presence);
     }
 
     if (g % 10 == 0) {
@@ -220,14 +250,14 @@ void simulation(const Param& param_) {
         ofs1 << pop[q].act << "\t";
       }
       ofs1 << "\n";
-      //ofs2 << g << "\t" << ifd_prop / num_scenes << "\t" << total_ttIFD / num_scenes << "\t\n";
+      ofs2 << g << "\t" << ifd_prop / param_.scenes << "\t" << total_ttIFD / param_.scenes << total_sdintake / param_.scenes << "\t\n";
     }
 
     reproduction(pop, param_);
     cout << g << endl;
   }
   ofs1.close();
-  //ofs2.close();
+  ofs2.close();
   cout << "End";
 
 
