@@ -33,6 +33,14 @@ struct ind {
   int ypos;
 };
 
+struct cell {
+  cell() {}
+  cell(double resource, double risk) : resource(resource), risk(risk) {}
+
+  double resource;
+  double risk;
+};
+
 void ind::move(const vector<vector<double>>& landscape, vector<vector<int>>& presence) {
 
   double present_intake = landscape[xpos][ypos] / static_cast<double> (presence[xpos][ypos]);
@@ -172,10 +180,10 @@ void simulation(const Param& param_) {
   os.close();
 
   //landscape initialization
-  vector<vector<double>> landscape(param_.dims, vector<double>(param_.dims));
+  vector<vector<cell>> landscape(param_.dims, vector<cell>(param_.dims));
   for (int i = 0; i < landscape.size(); ++i) {
     for (int j = 0; j < landscape[i].size(); ++j) {
-      landscape[i][j] = uniform_real_distribution<double>(param_.resource_min, param_.resource_max)(rnd::reng);
+      landscape[i][j] = cell(uniform_real_distribution<double>(param_.resource_min, param_.resource_max)(rnd::reng), uniform_real_distribution<double>(param_.resource_min, param_.resource_max)(rnd::reng));
     }
   }
 
