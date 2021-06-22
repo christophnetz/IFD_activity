@@ -30,6 +30,8 @@ namespace cine2 {
     double mutation_rate;
     double mutation_shape;
     double cost;
+    double cost_comp;
+    double riskspread;
 
     std::string outdir;   // output folder
     

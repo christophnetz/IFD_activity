@@ -26,9 +26,11 @@ namespace cine2 {
     clp_required(resource_min);
     clp_required(resource_max);
 
-    clp_optional_val(mutation_rate, 0.01f);
-    clp_optional_val(mutation_shape, 0.01f);
-    clp_optional_val(cost, 0.0001f);
+    clp_optional_val(mutation_rate, 0.01);
+    clp_optional_val(mutation_shape, 0.01);
+    clp_optional_val(cost, 0.0001);
+    clp_optional_val(cost_comp, 0.0001);
+    clp_optional_val(riskspread, 100.0);
 
 
     clp_optional_val(outdir, std::string{});
@@ -92,6 +94,8 @@ namespace cine2 {
     stream(mutation_rate);
     stream(mutation_shape);
     stream(cost);
+    stream(cost_comp);
+    stream(riskspread);
 
 
     stream_str(outdir);
