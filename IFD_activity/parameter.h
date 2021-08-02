@@ -32,6 +32,7 @@ namespace cine2 {
     double cost;
     double cost_comp;
     double riskspread;
+    int seed;
 
     std::string outdir;   // output folder
     

@@ -4,7 +4,7 @@ library(scales)
 setwd("C:/Users/user/Desktop/IFDxpersonality/IFD_activity/IFD_activity")
 
 
-strID <- "Evol6"
+strID <- "Evol14"
 
 str1 <- paste0(strID,"activities")
 data <- read.table(paste0(str1, ".txt"), sep="\t", header = F)
@@ -98,8 +98,8 @@ colnames(df) <- data$V1
 
 length(df[1,])
 
-minwv = -0.7;     # minimal (weight) value
-maxwv = 0.1;     # maximal (weight) value
+minwv = 0.0;     # minimal (weight) value
+maxwv = 1.0;     # maximal (weight) value
 steps = 101;  # num. of bins across range
 stepsize = (maxwv - minwv)/steps  # bin range size
 

@@ -31,7 +31,7 @@ namespace cine2 {
     clp_optional_val(cost, 0.0001);
     clp_optional_val(cost_comp, 0.0001);
     clp_optional_val(riskspread, 100.0);
-
+    clp_optional_val(seed, 1111);
 
     clp_optional_val(outdir, std::string{});
 
@@ -96,6 +96,7 @@ namespace cine2 {
     stream(cost);
     stream(cost_comp);
     stream(riskspread);
+    stream(seed);
 
 
     stream_str(outdir);

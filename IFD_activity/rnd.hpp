@@ -2,7 +2,7 @@
 #define EVOANN_RND_HPP_INCLUDED
 
 #include "rndutils.hpp"
-
+#include "parameter.h"
 
 namespace rnd {
 

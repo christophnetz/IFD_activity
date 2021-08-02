@@ -49,14 +49,16 @@ struct ind {
 void ind::move(const vector<vector<cell>>& landscape, vector<vector<double>>& presence) {
 
   if (!dead) {
-    double present_intake = landscape[xpos][ypos].resource * comp / (presence[xpos][ypos]) + bold * landscape[xpos][ypos].risk;
+    double present_intake = landscape[xpos][ypos].resource * comp / (presence[xpos][ypos]) /*+ bold * landscape[xpos][ypos].risk*/;
     double potential_intake;
     int former_xpos = xpos;
     int former_ypos = ypos;
 
+    //std::uniform_real_distribution<double>error (0.0, 1.0);
+
     for (int i = 0; i < landscape.size(); ++i) {
       for (int j = 0; j < landscape[i].size(); ++j) {
-        potential_intake = landscape[i][j].resource * comp / (presence[i][j] + comp) + bold * landscape[i][j].risk;
+        potential_intake = landscape[i][j].resource * comp / (presence[i][j] + comp);
         if (present_intake < potential_intake) {
           present_intake = potential_intake;
           xpos = i;
@@ -85,7 +87,9 @@ void ind::mutate(bernoulli_distribution& mrate, normal_distribution<double>& msh
   }
 
   if (mrate(rnd::reng)) {
-    bold += mshape(rnd::reng);  // Can, maybe should be negative! (supposedly only substatial change from previous run)
+    bold += mshape(rnd::reng); 
+    bold = max(bold, 0.0);
+    bold = min(bold, 1.0);
   }
 
   if (mrate(rnd::reng)) {
@@ -103,7 +107,7 @@ void ind::springoff(const ind& parent) {
 
 bool check_IFD(const vector<ind>& pop, const vector < vector<cell>>& landscape, const vector<vector<double>>& presence) {
 
-
+     
   for (int p = 0; p < pop.size(); ++p) {
     double present_intake = landscape[pop[p].xpos][pop[p].ypos].resource * pop[p].comp / presence[pop[p].xpos][pop[p].ypos];
 
@@ -170,12 +174,9 @@ void landscape_setup(vector<vector<cell>>& landscape, Param param_) {
     for (int j = 0; j < landscape[i].size(); ++j) {
       //landscape[i][j] = cell(uniform_real_distribution<double>(param_.resource_min * param_.pop_size * 400.0 / (1000.0 * cells), param_.resource_max * param_.pop_size * 400 / (1000.0 * cells))(rnd::reng), 0.0);
       landscape[i][j] = cell(uniform_real_distribution<double>(param_.resource_min, param_.resource_max)(rnd::reng),
-        exponential_distribution<double>(param_.riskspread)(rnd::reng));
+        /*exponential_distribution<double>(param_.riskspread)(rnd::reng)*/0.0);
     }
   }
-
-
-
 }
 
 void reproduction(vector<ind>& pop, const Param& param_) {
@@ -183,7 +184,7 @@ void reproduction(vector<ind>& pop, const Param& param_) {
   vector<double> fitness;
 
   for (int i = 0; i < pop.size(); ++i) {
-    fitness.push_back(max(pop[i].food - param_.cost * pop[i].act * param_.t_scenes * param_.scenes - param_.cost_comp * pop[i].comp * param_.t_scenes * param_.scenes, 0.0));
+    fitness.push_back(max(0.0, pop[i].food - param_.cost * pop[i].act * param_.t_scenes * param_.scenes - param_.cost_comp * pop[i].comp * param_.t_scenes * param_.scenes));
   }
 
   rndutils::mutable_discrete_distribution<int, rndutils::all_zero_policy_uni> rdist;
@@ -209,6 +210,10 @@ void reproduction(vector<ind>& pop, const Param& param_) {
 
 
 void simulation(const Param& param_) {
+
+  if(param_.seed != 0)
+    rnd::reng.seed(param_.seed);
+  
 
 
   std::ofstream ofs1(param_.outdir + "activities.txt", std::ofstream::out);
@@ -236,6 +241,8 @@ void simulation(const Param& param_) {
 
   for (int g = 0; g < param_.G; ++g) {
 
+    
+
     vector<double> activities;
     vector<vector<double>> presence(param_.dims, vector<double>(param_.dims, 0.0));
     for (int i = 0; i < pop.size(); ++i) {
@@ -255,6 +262,12 @@ void simulation(const Param& param_) {
     for (int scenes = 0; scenes < param_.scenes; ++scenes) {
       //cout << "scenes: " << scenes << endl;
       landscape_setup(landscape, param_);
+      // Randomly initialize individuals:
+      //for (int i = 0; i < param_.pop_size; ++i) {
+      //  pop[i].xpos = pdist(rnd::reng);
+      //  pop[i].ypos = pdist(rnd::reng);
+      //}
+
 
       double time = 0.0;
       int id;
@@ -268,12 +281,12 @@ void simulation(const Param& param_) {
         //cout << time << "\n";
         time += event_dist(rnd::reng);
 
-        while (time > eat_t) {
+        while (time > eat_t) { // alternative: individuals eat continuously. Maybe let's not
           for (int p = 0; p < pop.size(); ++p) {
             if (!pop[p].dead) {
               pop[p].food += landscape[pop[p].xpos][pop[p].ypos].resource * pop[p].comp / presence[pop[p].xpos][pop[p].ypos];
-              if(bernoulli_distribution(landscape[pop[p].xpos][pop[p].ypos].risk)(rnd::reng)) 
-                pop[p].die(presence[pop[p].xpos][pop[p].ypos]);
+              //if(bernoulli_distribution(landscape[pop[p].xpos][pop[p].ypos].risk)(rnd::reng)) 
+              //  pop[p].die(presence[pop[p].xpos][pop[p].ypos]);
             }
           }
           ++eat_t;
@@ -296,7 +309,7 @@ void simulation(const Param& param_) {
       //prop idf fulfilled
       ifd_prop += count_IFD(pop, landscape, presence);
       total_ttIFD += time_to_IFD;
-      total_sdintake += intake_variance(pop, landscape, presence);
+      total_sdintake += intake_variance(pop, landscape, presence);  //Correct intake for competitiveness?
     }
 
     if (g % 10 == 0) {
@@ -316,11 +329,12 @@ void simulation(const Param& param_) {
     }
 
     reproduction(pop, param_);
-    cout << g << endl;
+    cout << g  << "\t" << pdist(rnd::reng) << endl;
   }
   ofs1.close();
   ofs2.close();
   cout << "End";
 
+  
 
 }
