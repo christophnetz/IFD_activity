@@ -32,7 +32,7 @@ struct ind {
   ind(int x, int y, double a, double c, double b) : xpos(x), ypos(y), act(a), comp(c), bold(b) {}
 
   void die(double& presence);
-  void mutate(bernoulli_distribution& mutate, normal_distribution<double>& mshape);
+  void mutate(bernoulli_distribution& mutate, normal_distribution<double>& mshape); //mutation is from a normal not cauchy distribution - 
   void move(const vector<vector<cell>>& landscape, vector<vector<double>>& presence);
   void springoff(const ind& parent);
 
@@ -49,14 +49,14 @@ struct ind {
 void ind::move(const vector<vector<cell>>& landscape, vector<vector<double>>& presence) {
 
   if (!dead) {
-    double present_intake = landscape[xpos][ypos].resource * comp / (presence[xpos][ypos]) + bold * landscape[xpos][ypos].risk;
+    double present_intake = landscape[xpos][ypos].resource * comp / (presence[xpos][ypos]) ;
     double potential_intake;
     int former_xpos = xpos;
     int former_ypos = ypos;
 
     for (int i = 0; i < landscape.size(); ++i) {
       for (int j = 0; j < landscape[i].size(); ++j) {
-        potential_intake = landscape[i][j].resource * comp / (presence[i][j] + comp) + bold * landscape[i][j].risk;
+        potential_intake = landscape[i][j].resource * comp / (presence[i][j] + comp);
         if (present_intake < potential_intake) {
           present_intake = potential_intake;
           xpos = i;
@@ -88,10 +88,10 @@ void ind::mutate(bernoulli_distribution& mrate, normal_distribution<double>& msh
     bold += mshape(rnd::reng);  // Can, maybe should be negative! (supposedly only substatial change from previous run)
   }
 
-  if (mrate(rnd::reng)) {
-    comp += mshape(rnd::reng);
-    comp = max(comp, 0.1);  // Can't be 0, better way to implement?
-  }
+//if (mrate(rnd::reng)) {
+  //  comp += mshape(rnd::reng);
+    //comp = max(comp, 0.1);  // Can't be 0, better way to implement?
+ //}
 }
 
 void ind::springoff(const ind& parent) {
@@ -170,7 +170,7 @@ void landscape_setup(vector<vector<cell>>& landscape, Param param_) {
     for (int j = 0; j < landscape[i].size(); ++j) {
       //landscape[i][j] = cell(uniform_real_distribution<double>(param_.resource_min * param_.pop_size * 400.0 / (1000.0 * cells), param_.resource_max * param_.pop_size * 400 / (1000.0 * cells))(rnd::reng), 0.0);
       landscape[i][j] = cell(uniform_real_distribution<double>(param_.resource_min, param_.resource_max)(rnd::reng),
-        exponential_distribution<double>(param_.riskspread)(rnd::reng));
+        0.0);
     }
   }
 
@@ -183,7 +183,8 @@ void reproduction(vector<ind>& pop, const Param& param_) {
   vector<double> fitness;
 
   for (int i = 0; i < pop.size(); ++i) {
-    fitness.push_back(max(pop[i].food - param_.cost * pop[i].act * param_.t_scenes * param_.scenes - param_.cost_comp * pop[i].comp * param_.t_scenes * param_.scenes, 0.0));
+    //fitness.push_back(max(pop[i].food - param_.cost * pop[i].act * param_.t_scenes * param_.scenes - param_.cost_comp * pop[i].comp * param_.t_scenes * param_.scenes, 0.0));
+    fitness.push_back(max(pop[i].food , 0.0));
   }
 
   rndutils::mutable_discrete_distribution<int, rndutils::all_zero_policy_uni> rdist;
@@ -209,7 +210,6 @@ void reproduction(vector<ind>& pop, const Param& param_) {
 
 
 void simulation(const Param& param_) {
-
 
   std::ofstream ofs1(param_.outdir + "activities.txt", std::ofstream::out);
   std::ofstream ofs2(param_.outdir + "ecology.txt", std::ofstream::out);
@@ -238,6 +238,7 @@ void simulation(const Param& param_) {
 
     vector<double> activities;
     vector<vector<double>> presence(param_.dims, vector<double>(param_.dims, 0.0));
+
     for (int i = 0; i < pop.size(); ++i) {
       activities.push_back(pop[i].act);
       presence[pop[i].xpos][pop[i].ypos] += pop[i].comp;
@@ -255,6 +256,15 @@ void simulation(const Param& param_) {
     for (int scenes = 0; scenes < param_.scenes; ++scenes) {
       //cout << "scenes: " << scenes << endl;
       landscape_setup(landscape, param_);
+
+      //for (int i = 0; i < param_.pop_size; ++i) {
+      //    pop[i].xpos = pdist(rnd::reng);
+      //    pop[i].ypos = pdist(rnd::reng);
+      //}
+
+      for (int i = 0; i < pop.size(); ++i) {
+          presence[pop[i].xpos][pop[i].ypos] += pop[i].comp;
+      }
 
       double time = 0.0;
       int id;
@@ -312,7 +322,7 @@ void simulation(const Param& param_) {
       ofs1 << "\n";
       ofs3 << "\n";
       ofs4 << "\n";
-      ofs2 << g << "\t" << ifd_prop / param_.scenes << "\t" << total_ttIFD / param_.scenes << total_sdintake / param_.scenes << "\t\n";
+      ofs2 << g << "\t" << ifd_prop / param_.scenes << "\t" << total_ttIFD / param_.scenes << "\t" << total_sdintake / param_.scenes << "\t\n";
     }
 
     reproduction(pop, param_);

@@ -2,14 +2,14 @@ library(reshape2)
 library(ggplot2)
 library(scales)
 setwd("C:/Users/user/Desktop/IFDxpersonality/IFD_activity/IFD_activity")
+setwd("C:/Users/ocelo/Documents/IFD_activity/IFD_activity")
 
-
-strID <- "Evol6"
+strID <- "Evol2ff"
 
 str1 <- paste0(strID,"activities")
 data <- read.table(paste0(str1, ".txt"), sep="\t", header = F)
 
-df <- (t(subset(data, select = -c(V1, V1002))))
+df <- (t(subset(data, select = -c(V1, V102))))
 colnames(df) <- data$V1
 
 length(df[1,])
@@ -91,7 +91,7 @@ P_comp
 
 str1 <- paste0(strID,"bold")
 
-data <- read.table(paste0(str1, ".txt"), sep="\t", header = F)
+data <- read.table(paste0(str1, ".txt"), sep="\t", header = T)
 
 df <- (t(subset(data, select = -c(V1, V1002))))
 colnames(df) <- data$V1
@@ -154,10 +154,13 @@ frequencies <- ggplot(data=df_H, aes(x=gens, y=highact, colour="weight > 0")) +
 
 #####
 # IFD measures
+str1 <- paste0(strID,"ecology")
 
-idf_data <- read.table("IDF.txt", header = T)
+ifd_data <- read.table(paste0(str1, ".txt"), header = T)
 
-plot(idf_data$G, idf_data$avg_ttifd)
+
+plot(ifd_data$time_to_IFD ~ifd_data$G)
+plot(ifd_data$ifd_prop ~ifd_data$G)
 
 
 
