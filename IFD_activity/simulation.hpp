@@ -228,7 +228,9 @@ void simulation(const Param& param_) {
   std::ofstream ofs3(param_.outdir + "comp.txt", std::ofstream::out);
   std::ofstream ofs4(param_.outdir + "bold.txt", std::ofstream::out);
   //std::ofstream ofs5(param_.outdir + "landscape.txt", std::ofstream::out);
+  std::ofstream ofs5(param_.outdir + "_landscape.txt", std::ofstream::out);
 
+  ofs5 << "gen\tscene\ttime\tcomp\tact\txpos\typos\tfood\tintake\n";
 
 
   ofs2 << "G" << "\t" << "ifd_prop" << "\t" << "time_to_IFD" << "\t" << "sd_intake" << "\t\n";
@@ -315,19 +317,13 @@ void simulation(const Param& param_) {
 
           if (g == 3000) {
 
-            std::ofstream ofs5(param_.outdir + to_string(g) + "_landscape.txt", std::ofstream::app);
-
-            ofs5 << "scene\ttime\tcomp\tact\txpos\typos\tfood\tintake\n";
 
             for (int i = 0; i < pop.size(); ++i) {
 
-              ofs5 << scenes << "\t" << eat_t << "\t" << pop[i].comp << "\t" << pop[i].act << "\t" << pop[i].xpos << "\t"
-                << pop[i].ypos << "\t" << pop[i].food <<"\t"<< pop[i].updateintake(landscape, presence) << "\n";
-
+              ofs5 << g <<"\t" <<scenes << "\t" << eat_t << "\t" << pop[i].comp << "\t" << pop[i].act << "\t" << pop[i].xpos << "\t"
+                   << pop[i].ypos << "\t" << pop[i].food <<"\t"<< pop[i].updateintake(landscape, presence) << "\n";
 
             }
-            ofs5.close();
-
           }
         }
 
