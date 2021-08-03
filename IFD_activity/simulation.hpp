@@ -35,6 +35,8 @@ struct ind {
   void mutate(bernoulli_distribution& mutate, normal_distribution<double>& mshape);
   void move(const vector<vector<cell>>& landscape, vector<vector<double>>& presence);
   void springoff(const ind& parent);
+  double updateintake(const vector<vector<cell>>& landscape, vector<vector<double>>& presence);
+
 
   bool dead = false;
   double food = 0.0;
@@ -45,6 +47,11 @@ struct ind {
   int ypos;
 };
 
+
+double ind::updateintake(const vector<vector<cell>>& landscape, vector<vector<double>>& presence) {
+  return landscape[xpos][ypos].resource * comp / (presence[xpos][ypos]) /*+ bold * landscape[xpos][ypos].risk*/;
+
+}
 
 void ind::move(const vector<vector<cell>>& landscape, vector<vector<double>>& presence) {
 
@@ -73,10 +80,10 @@ void ind::move(const vector<vector<cell>>& landscape, vector<vector<double>>& pr
 }
 
 void ind::die(double& presence) {
-    food = 0.0;
-    presence -= comp;
-    comp = 0.0;
-    dead = true;
+  food = 0.0;
+  presence -= comp;
+  comp = 0.0;
+  dead = true;
 }
 
 void ind::mutate(bernoulli_distribution& mrate, normal_distribution<double>& mshape) {
@@ -87,7 +94,7 @@ void ind::mutate(bernoulli_distribution& mrate, normal_distribution<double>& msh
   }
 
   if (mrate(rnd::reng)) {
-    bold += mshape(rnd::reng); 
+    bold += mshape(rnd::reng);
     bold = max(bold, 0.0);
     bold = min(bold, 1.0);
   }
@@ -107,7 +114,7 @@ void ind::springoff(const ind& parent) {
 
 bool check_IFD(const vector<ind>& pop, const vector < vector<cell>>& landscape, const vector<vector<double>>& presence) {
 
-     
+
   for (int p = 0; p < pop.size(); ++p) {
     double present_intake = landscape[pop[p].xpos][pop[p].ypos].resource * pop[p].comp / presence[pop[p].xpos][pop[p].ypos];
 
@@ -211,15 +218,18 @@ void reproduction(vector<ind>& pop, const Param& param_) {
 
 void simulation(const Param& param_) {
 
-  if(param_.seed != 0)
+  if (param_.seed != 0)
     rnd::reng.seed(param_.seed);
-  
+
 
 
   std::ofstream ofs1(param_.outdir + "activities.txt", std::ofstream::out);
   std::ofstream ofs2(param_.outdir + "ecology.txt", std::ofstream::out);
   std::ofstream ofs3(param_.outdir + "comp.txt", std::ofstream::out);
   std::ofstream ofs4(param_.outdir + "bold.txt", std::ofstream::out);
+  //std::ofstream ofs5(param_.outdir + "landscape.txt", std::ofstream::out);
+
+
 
   ofs2 << "G" << "\t" << "ifd_prop" << "\t" << "time_to_IFD" << "\t" << "sd_intake" << "\t\n";
 
@@ -241,13 +251,12 @@ void simulation(const Param& param_) {
 
   for (int g = 0; g < param_.G; ++g) {
 
-    
+
 
     vector<double> activities;
-    vector<vector<double>> presence(param_.dims, vector<double>(param_.dims, 0.0));
     for (int i = 0; i < pop.size(); ++i) {
       activities.push_back(pop[i].act);
-      presence[pop[i].xpos][pop[i].ypos] += pop[i].comp;
+      //presence[pop[i].xpos][pop[i].ypos] += pop[i].comp;
     }
 
     rndutils::mutable_discrete_distribution<int, rndutils::all_zero_policy_uni> rdist;
@@ -263,11 +272,15 @@ void simulation(const Param& param_) {
       //cout << "scenes: " << scenes << endl;
       landscape_setup(landscape, param_);
       // Randomly initialize individuals:
+      // 
       //for (int i = 0; i < param_.pop_size; ++i) {
       //  pop[i].xpos = pdist(rnd::reng);
       //  pop[i].ypos = pdist(rnd::reng);
       //}
-
+      vector<vector<double>> presence(param_.dims, vector<double>(param_.dims, 0.0));
+      for (int i = 0; i < pop.size(); ++i) {
+        presence[pop[i].xpos][pop[i].ypos] += pop[i].comp;
+      }
 
       double time = 0.0;
       int id;
@@ -279,6 +292,11 @@ void simulation(const Param& param_) {
 
       for (; time < param_.t_scenes; ) {
         //cout << time << "\n";
+
+
+
+
+
         time += event_dist(rnd::reng);
 
         while (time > eat_t) { // alternative: individuals eat continuously. Maybe let's not
@@ -289,7 +307,28 @@ void simulation(const Param& param_) {
               //  pop[p].die(presence[pop[p].xpos][pop[p].ypos]);
             }
           }
+
+
+
           ++eat_t;
+
+
+          if (g == 3000) {
+
+            std::ofstream ofs5(param_.outdir + to_string(g) + "_landscape.txt", std::ofstream::app);
+
+            ofs5 << "scene\ttime\tcomp\tact\txpos\typos\tfood\tintake\n";
+
+            for (int i = 0; i < pop.size(); ++i) {
+
+              ofs5 << scenes << "\t" << eat_t << "\t" << pop[i].comp << "\t" << pop[i].act << "\t" << pop[i].xpos << "\t"
+                << pop[i].ypos << "\t" << pop[i].food <<"\t"<< pop[i].updateintake(landscape, presence) << "\n";
+
+
+            }
+            ofs5.close();
+
+          }
         }
 
 
@@ -305,6 +344,9 @@ void simulation(const Param& param_) {
 
         }
         //cout << time << "\t" << IFD_reached << "\t" << endl;
+
+
+
       }
       //prop idf fulfilled
       ifd_prop += count_IFD(pop, landscape, presence);
@@ -329,12 +371,12 @@ void simulation(const Param& param_) {
     }
 
     reproduction(pop, param_);
-    cout << g  << "\t" << pdist(rnd::reng) << endl;
+    cout << g << endl;
   }
   ofs1.close();
   ofs2.close();
   cout << "End";
 
-  
+
 
 }
