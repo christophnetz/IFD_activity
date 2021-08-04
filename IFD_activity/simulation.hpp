@@ -88,10 +88,10 @@ void ind::die(double& presence) {
 
 void ind::mutate(bernoulli_distribution& mrate, normal_distribution<double>& mshape) {
 
-  if (mrate(rnd::reng)) {
-    act += mshape(rnd::reng);
-    act = max(act, 0.0);
-  }
+  //if (mrate(rnd::reng)) {
+  //  act += mshape(rnd::reng);
+  //  act = max(act, 0.0);
+  //}
 
   if (mrate(rnd::reng)) {
     bold += mshape(rnd::reng);
@@ -315,7 +315,7 @@ void simulation(const Param& param_) {
           ++eat_t;
 
 
-          if (g == 3000) {
+          if (g == param_.G - 1) {
 
 
             for (int i = 0; i < pop.size(); ++i) {
@@ -350,7 +350,7 @@ void simulation(const Param& param_) {
       total_sdintake += intake_variance(pop, landscape, presence);  //Correct intake for competitiveness?
     }
 
-    if (g % 10 == 0) {
+    if (g % 1 == 0) {
       ofs1 << g << "\t";
       ofs3 << g << "\t";
       ofs4 << g << "\t";
