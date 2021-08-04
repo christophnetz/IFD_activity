@@ -41,7 +41,7 @@ struct ind {
   bool dead = false;
   double food = 0.0;
   double act;
-  double comp;
+  double comp = 1.0;
   double bold;
   int xpos;
   int ypos;
@@ -175,13 +175,8 @@ void landscape_setup(vector<vector<cell>>& landscape, Param param_) {
   double cells = static_cast<double>(landscape.size() * landscape.size());
   for (int i = 0; i < landscape.size(); ++i) {
     for (int j = 0; j < landscape[i].size(); ++j) {
-      //landscape[i][j] = cell(uniform_real_distribution<double>(param_.resource_min * param_.pop_size * 400.0 / (1000.0 * cells), param_.resource_max * param_.pop_size * 400 / (1000.0 * cells))(rnd::reng), 0.0);
       landscape[i][j] = cell(uniform_real_distribution<double>(param_.resource_min, param_.resource_max)(rnd::reng),
-<<<<<<< HEAD
         0.0);
-=======
-        /*exponential_distribution<double>(param_.riskspread)(rnd::reng)*/0.0);
->>>>>>> evol_personality
     }
   }
 }
@@ -206,7 +201,6 @@ void reproduction(vector<ind>& pop, const Param& param_) {
     tmp_pop[i].springoff(pop[ancestor]);
     tmp_pop[i].xpos = pdist(rnd::reng);
     tmp_pop[i].ypos = pdist(rnd::reng);
-
     tmp_pop[i].mutate(mrate, mshape);
   }
 
