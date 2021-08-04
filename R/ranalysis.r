@@ -190,15 +190,14 @@ data <- data %>%
 
 data <- mutate(data, morph = cut(comp, c(0.0, 0.15, 0.26, 0.4, 0.5, 0.75, 1.0, 2.0), labels = paste0("morph", 1:7)))
   
-  morphs <- data %>%
-    group_by(scene, time, morph) %>%
-    summarize(
-      count = n(),
-      sumint = sum(intake),
-      average = sumint / count,
-      meancomp = mean(comp)
-      
-    )
+morphs <- data %>%
+  group_by(scene, time, morph) %>%
+  summarize(
+    count = n(),
+    sumint = sum(intake),
+    average = sumint / count,
+    meancomp = mean(comp)
+)
   
   
   
@@ -257,17 +256,30 @@ ggplot(scapedata, aes(x = resource, y = sdcomp, colour = time))+
 
 
 ##########
-#analyse clusters, händisch
+#analyse clusters
 
-
+#Individual intake rates across time, with competitiveness values colored in
 ggplot(data = filter(data, scene == 1)) +geom_jitter(aes(x = time, y = intake, colour = comp))+
   ylim(0,0.05)
 
-
+#Average intake rate of the 7 morphs across scenes (facets) and timesteps (xaxis)
 ggplot(morphs, aes(time, average, colour = morph))+
   geom_line()+facet_wrap(~scene)
 
+#same without facet
 ggplot(morphs, aes(x = time, y = average, group = interaction(morph, scene), colour = morph))+
   geom_line()
+
+###Conclusions: WHat is happening?
+# Polymorphisms are driven by the interplay between spatial assortment within scenes, 
+# where resource level and individual competitiveness align, and
+# the redistribution of resources, that benefits less competitive, 
+# spatially assorted morphs. Since similar morphs co-occur, it pays for 
+# intermediate morphs to stay more competitive than the adjacent less competitive morphs
+# in case of a favorable habitat shift.
+
+
+
+
 
 
