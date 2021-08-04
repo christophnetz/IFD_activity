@@ -114,8 +114,6 @@ bool check_IFD(const vector<ind>& pop, const vector < vector<cell>>& landscape, 
         }
       }
     }
-
-
   }
   return true;
 }
@@ -137,8 +135,6 @@ label:
         }
       }
     }
-
-
   }
   return static_cast<double>(count) / pop.size();
 }
