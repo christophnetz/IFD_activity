@@ -18,7 +18,6 @@ namespace cine2 {
 
     Param param;
     clp_required(G);
-    clp_required(scenes);
     clp_required(t_scenes);
 
     clp_required(pop_size);
@@ -30,7 +29,8 @@ namespace cine2 {
     clp_optional_val(mutation_shape, 0.01);
     clp_optional_val(cost, 0.0001);
     clp_optional_val(cost_comp, 0.0001);
-    clp_optional_val(riskspread, 100.0);
+    clp_optional_val(changerate, 0.05);
+    clp_optional_val(changeprop, 0.05);
     clp_optional_val(seed, 1111);
 
     clp_optional_val(outdir, std::string{});
@@ -83,7 +83,6 @@ namespace cine2 {
     const char* rb = "}")
   {
     stream(G);
-    stream(scenes);
     stream(t_scenes);
 
     stream(pop_size);
@@ -95,7 +94,7 @@ namespace cine2 {
     stream(mutation_shape);
     stream(cost);
     stream(cost_comp);
-    stream(riskspread);
+    stream(changeprop);
     stream(seed);
 
 

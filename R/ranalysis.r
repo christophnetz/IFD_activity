@@ -6,7 +6,7 @@ library(tidyverse)
 setwd("C:/Users/user/Desktop/IFDxpersonality/IFD_activity/IFD_activity")
 
 
-strID <- "Evol21"
+strID <- "Evol22"
 
 str1 <- paste0(strID,"activities")
 data <- read.table(paste0(str1, ".txt"), sep="\t", header = F)
@@ -83,7 +83,7 @@ P_comp <- ggplot(data = melt(t(mtrxwP1)), aes(x=Var1, y=Var2, fill=value)) + lab
   geom_tile() + scale_fill_gradientn(colours = colorRampPalette(c("white", "red", "blue"))(3), 
                                      values = c(0, 0.05 , 1), space = "Lab", guide = FALSE) + geom_hline(yintercept = 0)+ theme_bw() +
   theme(axis.title.x=element_text(size=16), axis.title.y=element_text(size=16), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),axis.line = element_line(colour = "black"), legend.position = "none")+
-  scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) + ylim(0.2, 0.6)
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01))
 
 P_comp 
 

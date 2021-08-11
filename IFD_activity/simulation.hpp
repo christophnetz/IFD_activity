@@ -191,7 +191,7 @@ void reproduction(vector<ind>& pop, const Param& param_) {
   vector<double> fitness;
 
   for (int i = 0; i < pop.size(); ++i) {
-    fitness.push_back(max(0.0, pop[i].food - param_.cost * pop[i].act * param_.t_scenes * param_.scenes - param_.cost_comp * pop[i].comp * param_.t_scenes * param_.scenes));
+    fitness.push_back(max(0.0, pop[i].food - param_.cost * pop[i].act * param_.t_scenes - param_.cost_comp * pop[i].comp * param_.t_scenes));
   }
 
   rndutils::mutable_discrete_distribution<int, rndutils::all_zero_policy_uni> rdist;
@@ -260,6 +260,7 @@ void simulation(const Param& param_) {
       activities.push_back(pop[i].act);
       //presence[pop[i].xpos][pop[i].ypos] += pop[i].comp;
     }
+    activities.push_back(param_.changerate); 
 
     rndutils::mutable_discrete_distribution<int, rndutils::all_zero_policy_uni> rdist;
     rdist.mutate(activities.cbegin(), activities.cend());
@@ -270,85 +271,80 @@ void simulation(const Param& param_) {
     double total_ttIFD = 0.0;
     double total_sdintake = 0.0;
 
-    for (int scenes = 0; scenes < param_.scenes; ++scenes) {
-      //cout << "scenes: " << scenes << endl;
-      landscape_setup(landscape, param_);
-      // Randomly initialize individuals:
-      // 
-      //for (int i = 0; i < param_.pop_size; ++i) {
-      //  pop[i].xpos = pdist(rnd::reng);
-      //  pop[i].ypos = pdist(rnd::reng);
-      //}
-      vector<vector<double>> presence(param_.dims, vector<double>(param_.dims, 0.0));
-      for (int i = 0; i < pop.size(); ++i) {
-        presence[pop[i].xpos][pop[i].ypos] += pop[i].comp;
-      }
-
-      double time = 0.0;
-      int id;
-      int eat_t = 0;
-      double it_t = 0.0;
-      double increment = 0.1;
-      bool IFD_reached = false;
-      double time_to_IFD = 0.0;
-
-      for (; time < param_.t_scenes; ) {
-        //cout << time << "\n";
-
-
-
-
-
-        time += event_dist(rnd::reng);
-
-        while (time > eat_t) { // alternative: individuals eat continuously. Maybe let's not
-          for (int p = 0; p < pop.size(); ++p) {
-            if (!pop[p].dead) {
-              pop[p].food += landscape[pop[p].xpos][pop[p].ypos].resource * pop[p].comp / presence[pop[p].xpos][pop[p].ypos];
-              //if(bernoulli_distribution(landscape[pop[p].xpos][pop[p].ypos].risk)(rnd::reng)) 
-              //  pop[p].die(presence[pop[p].xpos][pop[p].ypos]);
-            }
-          }
-
-
-
-          ++eat_t;
-
-
-          if (g == param_.G - 1) {
-
-
-            for (int i = 0; i < pop.size(); ++i) {
-
-              ofs5 << g <<"\t" <<scenes << "\t" << eat_t << "\t" << pop[i].comp << "\t" << pop[i].act << "\t" << pop[i].xpos << "\t"
-                   << pop[i].ypos << "\t" << pop[i].food <<"\t"<< pop[i].updateintake(landscape, presence) << "\n";
-
-            }
-          }
-        }
-
-
-
-        if (!IFD_reached) {
-          id = rdist(rnd::reng);
-          pop[id].move(landscape, presence);
-          if (time > it_t) {
-            IFD_reached = check_IFD(pop, landscape, presence);
-            time_to_IFD = time;
-            it_t = floor(time / increment) * increment + increment;
-          }
-
-        }
-        //cout << time << "\t" << IFD_reached << "\t" << endl;
-
-
-
-      }
-      //prop idf fulfilled
-      ifd_prop += count_IFD(pop, landscape, presence);
-      total_ttIFD += time_to_IFD;
-      total_sdintake += intake_variance(pop, landscape, presence);  //Correct intake for competitiveness?
+    vector<vector<double>> presence(param_.dims, vector<double>(param_.dims, 0.0));
+    for (int i = 0; i < pop.size(); ++i) {
+      presence[pop[i].xpos][pop[i].ypos] += pop[i].comp;
     }
+
+    landscape_setup(landscape, param_);
+
+
+    double time = 0.0;
+    int id;
+    int eat_t = 0;
+    double it_t = 0.0;
+    double increment = 0.1;
+    bool IFD_reached = false;
+    double time_to_IFD = 0.0;
+
+    for (; time < param_.t_scenes; ) {
+
+      time += event_dist(rnd::reng);
+
+      while (time > eat_t) { // alternative: individuals eat continuously. Maybe let's not
+        for (int p = 0; p < pop.size(); ++p) {
+          if (!pop[p].dead) {
+            pop[p].food += landscape[pop[p].xpos][pop[p].ypos].resource * pop[p].comp / presence[pop[p].xpos][pop[p].ypos];
+            //if(bernoulli_distribution(landscape[pop[p].xpos][pop[p].ypos].risk)(rnd::reng)) 
+            //  pop[p].die(presence[pop[p].xpos][pop[p].ypos]);
+          }
+        }
+
+
+
+        ++eat_t;
+
+
+        if (g == param_.G - 1) {
+
+
+          for (int i = 0; i < pop.size(); ++i) {
+
+            ofs5 << g << "\t" << "\t" << eat_t << "\t" << pop[i].comp << "\t" << pop[i].act << "\t" << pop[i].xpos << "\t"
+              << pop[i].ypos << "\t" << pop[i].food << "\t" << pop[i].updateintake(landscape, presence) << "\n";
+
+          }
+        }
+      }
+
+      id = rdist(rnd::reng);
+      if (id == pop.size()) {
+
+        int nrcells = static_cast<int>(round(param_.dims * param_.dims * param_.changeprop));
+
+        std::vector<int> v(100); // vector with 100 ints.
+        std::iota(v.begin(), v.end(), 0);
+        std::shuffle(v.begin(), v.end(), rnd::reng);
+
+        for (int i = 0; i < nrcells; ++i) {
+          landscape[v[i] % 10][v[i] / 10] = cell(uniform_real_distribution<double>(param_.resource_min, param_.resource_max)(rnd::reng), 0.0);
+        }
+      }
+
+
+      else if (!IFD_reached) {
+        pop[id].move(landscape, presence);
+        if (time > it_t) {
+          IFD_reached = check_IFD(pop, landscape, presence);
+          time_to_IFD = time;
+          it_t = floor(time / increment) * increment + increment;
+        }
+      }
+    }
+    //prop idf fulfilled
+    ifd_prop += count_IFD(pop, landscape, presence);
+    total_ttIFD += time_to_IFD;
+    total_sdintake += intake_variance(pop, landscape, presence);  //Correct intake for competitiveness?
 
     if (g % 1 == 0) {
       ofs1 << g << "\t";
@@ -363,7 +359,7 @@ void simulation(const Param& param_) {
       ofs1 << "\n";
       ofs3 << "\n";
       ofs4 << "\n";
-      ofs2 << g << "\t" << ifd_prop / param_.scenes << "\t" << total_ttIFD / param_.scenes << total_sdintake / param_.scenes << "\t\n";
+      ofs2 << g << "\t" << ifd_prop << "\t" << total_ttIFD << "\t" << total_sdintake  << "\t\n";
     }
 
     reproduction(pop, param_);
