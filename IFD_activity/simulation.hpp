@@ -88,10 +88,10 @@ void ind::die(double& presence) {
 
 void ind::mutate(bernoulli_distribution& mrate, normal_distribution<double>& mshape) {
 
-  //if (mrate(rnd::reng)) {
-  //  act += mshape(rnd::reng);
-  //  act = max(act, 0.0);
-  //}
+  if (mrate(rnd::reng)) {
+    act += mshape(rnd::reng);
+    act = max(act, 0.0);
+  }
 
   if (mrate(rnd::reng)) {
     bold += mshape(rnd::reng);
@@ -286,6 +286,7 @@ void simulation(const Param& param_) {
     double increment = 0.1;
     bool IFD_reached = false;
     double time_to_IFD = 0.0;
+    int count = 0;
 
     for (; time < param_.t_scenes; ) {
 
@@ -318,8 +319,20 @@ void simulation(const Param& param_) {
       }
 
       id = rdist(rnd::reng);
-      if (id == pop.size()) {
-
+      if (id == pop.size())
+        ++count;
+      
+      else if (!IFD_reached) {
+        pop[id].move(landscape, presence);
+        if (time > it_t) {
+          IFD_reached = check_IFD(pop, landscape, presence);
+          time_to_IFD = time;
+          it_t = floor(time / increment) * increment + increment;
+        }
+      }
+      if (count == param_.alpha)
+      {
+        count = 0;
         int nrcells = static_cast<int>(round(param_.dims * param_.dims * param_.changeprop));
 
         std::vector<int> v(100); // vector with 100 ints.
@@ -332,14 +345,7 @@ void simulation(const Param& param_) {
       }
 
 
-      else if (!IFD_reached) {
-        pop[id].move(landscape, presence);
-        if (time > it_t) {
-          IFD_reached = check_IFD(pop, landscape, presence);
-          time_to_IFD = time;
-          it_t = floor(time / increment) * increment + increment;
-        }
-      }
+
     }
     //prop idf fulfilled
     ifd_prop += count_IFD(pop, landscape, presence);

@@ -6,7 +6,7 @@ library(tidyverse)
 setwd("C:/Users/user/Desktop/IFDxpersonality/IFD_activity/IFD_activity")
 
 
-strID <- "Evol22"
+strID <- "Evol1"
 
 str1 <- paste0(strID,"activities")
 data <- read.table(paste0(str1, ".txt"), sep="\t", header = F)
