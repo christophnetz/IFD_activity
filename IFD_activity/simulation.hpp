@@ -88,10 +88,10 @@ void ind::die(double& presence) {
 
 void ind::mutate(bernoulli_distribution& mrate, normal_distribution<double>& mshape) {
 
-  //if (mrate(rnd::reng)) {
-  //  act += mshape(rnd::reng);
-  //  act = max(act, 0.0);
-  //}
+  if (mrate(rnd::reng)) {
+    act += mshape(rnd::reng);
+    act = max(act, 0.0);
+  }
 
   if (mrate(rnd::reng)) {
     bold += mshape(rnd::reng);
