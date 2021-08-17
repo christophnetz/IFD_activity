@@ -19,11 +19,13 @@ namespace cine2 {
   struct Param
   {
     int G;                // generations
-    int scenes;                // time ticks per generation
     int t_scenes;                // time ticks per generation
 
     int pop_size;
     int dims;
+    int alpha;
+    int nrexplore = 100;
+
     double resource_min;
     double resource_max;
 
@@ -31,7 +33,8 @@ namespace cine2 {
     double mutation_shape;
     double cost;
     double cost_comp;
-    double riskspread;
+    double changerate;
+    double changeprop;
     int seed;
 
     std::string outdir;   // output folder
