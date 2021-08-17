@@ -23,6 +23,7 @@ namespace cine2 {
     clp_required(pop_size);
     clp_required(dims);
     clp_required(alpha);
+    clp_required(nrexplore);
     clp_required(resource_min);
     clp_required(resource_max);
 
@@ -89,6 +90,7 @@ namespace cine2 {
     stream(pop_size);
     stream(dims);
     stream(alpha);
+    stream(nrexplore);
     stream(resource_min);
     stream(resource_max);
 

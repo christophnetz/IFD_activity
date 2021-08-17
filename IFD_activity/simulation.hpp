@@ -33,7 +33,7 @@ struct ind {
 
   void die(double& presence);
   void mutate(bernoulli_distribution& mutate, normal_distribution<double>& mshape);
-  void move(const vector<vector<cell>>& landscape, vector<vector<double>>& presence);
+  void move(const vector<vector<cell>>& landscape, vector<vector<double>>& presence, Param param_);
   void springoff(const ind& parent);
   double updateintake(const vector<vector<cell>>& landscape, vector<vector<double>>& presence);
 
@@ -53,7 +53,7 @@ double ind::updateintake(const vector<vector<cell>>& landscape, vector<vector<do
 
 }
 
-void ind::move(const vector<vector<cell>>& landscape, vector<vector<double>>& presence) {
+void ind::move(const vector<vector<cell>>& landscape, vector<vector<double>>& presence, Param param_) {
 
   if (!dead) {
     double present_intake = landscape[xpos][ypos].resource * comp / (presence[xpos][ypos]) /*+ bold * landscape[xpos][ypos].risk*/;
@@ -62,18 +62,33 @@ void ind::move(const vector<vector<cell>>& landscape, vector<vector<double>>& pr
     int former_ypos = ypos;
 
     //std::uniform_real_distribution<double>error (0.0, 1.0);
-
-    for (int i = 0; i < landscape.size(); ++i) {
-      for (int j = 0; j < landscape[i].size(); ++j) {
-        potential_intake = landscape[i][j].resource * comp / (presence[i][j] + comp);
+    int newxpos = std::uniform_int_distribution<>(0, landscape.size() - 1)(rnd::reng);
+    int newypos = std::uniform_int_distribution<>(0, landscape.size() - 1)(rnd::reng);
+    //for (int i = 0; i < landscape.size(); ++i) {
+    //  for (int j = 0; j < landscape[i].size(); ++j) {
+        potential_intake = landscape[newxpos][newypos].resource * comp / (presence[newxpos][newypos] + comp);
         if (present_intake < potential_intake) {
           present_intake = potential_intake;
-          xpos = i;
-          ypos = j;
+          xpos = newxpos;
+          ypos = newypos;
         }
-      }
-    }
+    //  }
+    //}
 
+
+        std::vector<int> v(param_.dims * param_.dims); // vector with 100 ints.
+        std::iota(v.begin(), v.end(), 0);
+        std::shuffle(v.begin(), v.end(), rnd::reng);
+
+        for (int i = 0; i < param_.nrexplore; ++i) {
+          potential_intake = landscape[i%param_.dims][i/param_.dims].resource * comp / (presence[i % param_.dims][i / param_.dims] + comp);
+          if (present_intake < potential_intake) {
+            present_intake = potential_intake;
+            xpos = i % param_.dims;
+            ypos = i / param_.dims;
+          }
+
+        }
     presence[xpos][ypos] += comp;
     presence[former_xpos][former_ypos] -= comp;
   }
@@ -248,7 +263,7 @@ void simulation(const Param& param_) {
   vector<ind> pop;
   auto pdist = std::uniform_int_distribution<int>(0, param_.dims - 1);
   for (int i = 0; i < param_.pop_size; ++i) {
-    pop.emplace_back(pdist(rnd::reng), pdist(rnd::reng), 0.5, 1.0, 0.0);
+    pop.emplace_back(pdist(rnd::reng), pdist(rnd::reng), 1, 1.7, 0.0);
   }
 
   for (int g = 0; g < param_.G; ++g) {
@@ -323,7 +338,10 @@ void simulation(const Param& param_) {
         ++count;
       
       else if (!IFD_reached) {
-        pop[id].move(landscape, presence);
+        int xpos = pdist(rnd::reng);
+        int ypos = pdist(rnd::reng);
+        pop[id].move(landscape, presence, param_);
+        
         if (time > it_t) {
           IFD_reached = check_IFD(pop, landscape, presence);
           time_to_IFD = time;
@@ -335,12 +353,12 @@ void simulation(const Param& param_) {
         count = 0;
         int nrcells = static_cast<int>(round(param_.dims * param_.dims * param_.changeprop));
 
-        std::vector<int> v(100); // vector with 100 ints.
+        std::vector<int> v(param_.dims * param_.dims); // vector with 100 ints.
         std::iota(v.begin(), v.end(), 0);
         std::shuffle(v.begin(), v.end(), rnd::reng);
 
         for (int i = 0; i < nrcells; ++i) {
-          landscape[v[i] % 10][v[i] / 10] = cell(uniform_real_distribution<double>(param_.resource_min, param_.resource_max)(rnd::reng), 0.0);
+          landscape[v[i] % param_.dims][v[i] / param_.dims] = cell(uniform_real_distribution<double>(param_.resource_min, param_.resource_max)(rnd::reng), 0.0);
         }
       }
 

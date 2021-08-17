@@ -24,6 +24,8 @@ namespace cine2 {
     int pop_size;
     int dims;
     int alpha;
+    int nrexplore = 100;
+
     double resource_min;
     double resource_max;
 
