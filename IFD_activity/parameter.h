@@ -38,11 +38,6 @@ namespace cine2 {
     int seed;
 
     std::string outdir;   // output folder
-    
-
-
-
-
   };
 
 

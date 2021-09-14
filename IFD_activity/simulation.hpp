@@ -78,11 +78,11 @@ void ind::move(const vector<vector<cell>>& landscape, vector<vector<double>>& pr
     //}
 
 
-        std::vector<int> v(param_.dims * param_.dims); // vector with 100 ints.
+        std::vector<int> v(param_.dims * param_.dims); // vector with 100 ints. shuffled so that exploration can cycle through this vector
         std::iota(v.begin(), v.end(), 0);
         std::shuffle(v.begin(), v.end(), rnd::reng);
 
-        for (int i = 0; i < param_.nrexplore; ++i) {
+        for (int i = 0; i < param_.nrexplore; ++i) { //the individual searches a number of randomple chosen cells and computes the intake rates and move to the highest yielding patch,including the present one it is on
           potential_intake = landscape[i%param_.dims][i/param_.dims].resource * comp / (presence[i % param_.dims][i / param_.dims] + comp);
           if (present_intake < potential_intake) {
             present_intake = potential_intake;
@@ -236,7 +236,6 @@ void simulation(const Param& param_) {
   std::ofstream ofs2(param_.outdir + "ecology.txt", std::ofstream::out);
   std::ofstream ofs3(param_.outdir + "comp.txt", std::ofstream::out);
   std::ofstream ofs4(param_.outdir + "bold.txt", std::ofstream::out);
-  //std::ofstream ofs5(param_.outdir + "landscape.txt", std::ofstream::out);
   std::ofstream ofs5(param_.outdir + "_landscape.txt", std::ofstream::out);
 
   ofs5 << "gen\tscene\ttime\tcomp\tact\txpos\typos\tfood\tintake\n";
@@ -268,7 +267,7 @@ void simulation(const Param& param_) {
     vector<vector<double>> presence(param_.dims, vector<double>(param_.dims, 0.0));
     for (int i = 0; i < pop.size(); ++i) {
       activities.push_back(pop[i].act);
-      //presence[pop[i].xpos][pop[i].ypos] += pop[i].comp;
+      presence[pop[i].xpos][pop[i].ypos] += pop[i].comp;
     }
     activities.push_back(param_.changerate); 
 
@@ -280,11 +279,6 @@ void simulation(const Param& param_) {
     double ifd_prop = 0.0;
     double total_ttIFD = 0.0;
     double total_sdintake = 0.0;
-
-    vector<vector<double>> presence(param_.dims, vector<double>(param_.dims, 0.0));
-    for (int i = 0; i < pop.size(); ++i) {
-      presence[pop[i].xpos][pop[i].ypos] += pop[i].comp;
-    }
 
 
     landscape_setup(landscape, param_);
@@ -344,7 +338,7 @@ void simulation(const Param& param_) {
           it_t = floor(time / increment) * increment + increment;
         }
       }
-      if (count == param_.alpha)
+      if (count == param_.alpha) // here we implement variable 
       {
         count = 0;
         int nrcells = static_cast<int>(round(param_.dims * param_.dims * param_.changeprop));
