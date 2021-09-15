@@ -116,10 +116,10 @@ void ind::mutate(bernoulli_distribution& mrate, normal_distribution<double>& msh
     bold = min(bold, 1.0);
   }
 
-//if (mrate(rnd::reng)) {
-  //  comp += mshape(rnd::reng);
-    //comp = max(comp, 0.1);  // Can't be 0, better way to implement?
- //}
+if (mrate(rnd::reng)) {
+    comp += mshape(rnd::reng);
+    comp = max(comp, 0.1);  // Can't be 0, better way to implement?
+ }
 }
 
 void ind::springoff(const ind& parent) {
