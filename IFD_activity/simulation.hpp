@@ -11,11 +11,11 @@
 #include <string>
 
 #include "rnd.hpp"
+#include "grid.hpp"
+
 
 using namespace cine2;
 using namespace std;
-
-
 
 
 struct cell {
@@ -26,6 +26,11 @@ struct cell {
   double risk;
 };
 
+
+using landscape_t = Grid<cell>;
+using presence_t = Grid<double>;
+
+
 struct ind {
 
   ind() {}
@@ -33,9 +38,9 @@ struct ind {
 
   void die(double& presence);
   void mutate(bernoulli_distribution& mutate, normal_distribution<double>& mshape);
-  void move(const vector<vector<cell>>& landscape, vector<vector<double>>& presence, Param param_);
+  void move(const landscape_t& landscape, presence_t& presence, Param param_);
   void springoff(const ind& parent);
-  double updateintake(const vector<vector<cell>>& landscape, vector<vector<double>>& presence);
+  double updateintake(const landscape_t& landscape, presence_t& presence);
 
 
   bool dead = false;
@@ -48,49 +53,50 @@ struct ind {
 };
 
 
-double ind::updateintake(const vector<vector<cell>>& landscape, vector<vector<double>>& presence) {
-  return landscape[xpos][ypos].resource * comp / (presence[xpos][ypos]) /*+ bold * landscape[xpos][ypos].risk*/;
+double ind::updateintake(const landscape_t& landscape, presence_t& presence) {
+  return landscape(xpos, ypos).resource * comp / presence(xpos, ypos) /*+ bold * landscape[xpos][ypos].risk*/;
 
 }
 
-void ind::move(const vector<vector<cell>>& landscape, vector<vector<double>>& presence, Param param_) {
+void ind::move(const landscape_t& landscape, presence_t& presence, Param param_) {
 
   if (!dead) {
-    double present_intake = landscape[xpos][ypos].resource * comp / (presence[xpos][ypos]) /*+ bold * landscape[xpos][ypos].risk*/;
+    double present_intake = landscape(xpos, ypos).resource * comp / (presence(xpos, ypos)) /*+ bold * landscape[xpos][ypos].risk*/;
     double potential_intake;
     int former_xpos = xpos;
     int former_ypos = ypos;
 
     //std::uniform_real_distribution<double>error (0.0, 1.0);
-    int newxpos = std::uniform_int_distribution<>(0, landscape.size() - 1)(rnd::reng);
-    int newypos = std::uniform_int_distribution<>(0, landscape.size() - 1)(rnd::reng);
+    size_t newidx = std::uniform_int_distribution<size_t>(0, landscape.size() - 1)(rnd::reng);
     //for (int i = 0; i < landscape.size(); ++i) {
     //  for (int j = 0; j < landscape[i].size(); ++j) {
-        potential_intake = landscape[newxpos][newypos].resource * comp / (presence[newxpos][newypos] + comp);
+        potential_intake = landscape[newidx].resource * comp / (presence[newidx] + comp);
         if (present_intake < potential_intake) {
           present_intake = potential_intake;
-          xpos = newxpos;
-          ypos = newypos;
+          const auto newpos = landscape.coor(newidx);
+          xpos = newpos.first;
+          ypos = newpos.second;
         }
     //  }
     //}
 
 
-        std::vector<int> v(param_.dims * param_.dims); // vector with 100 ints.
-        std::iota(v.begin(), v.end(), 0);
+        std::vector<size_t> v(param_.dims * param_.dims); // vector with 100 ints.
+        std::iota(v.begin(), v.end(), 0ull);
         std::shuffle(v.begin(), v.end(), rnd::reng);
 
+        auto bestidx = landscape.lin_idx(xpos, ypos);
         for (int i = 0; i < param_.nrexplore; ++i) {
-          potential_intake = landscape[i%param_.dims][i/param_.dims].resource * comp / (presence[i % param_.dims][i / param_.dims] + comp);
+          const auto idx = v[i];
+          potential_intake = landscape[idx].resource * comp / (presence[idx] + comp);
           if (present_intake < potential_intake) {
             present_intake = potential_intake;
-            xpos = i % param_.dims;
-            ypos = i / param_.dims;
+            bestidx = idx;
           }
 
         }
-    presence[xpos][ypos] += comp;
-    presence[former_xpos][former_ypos] -= comp;
+    presence[bestidx] += comp;
+    presence(former_xpos, former_ypos) -= comp;
   }
 }
 
@@ -127,90 +133,72 @@ void ind::springoff(const ind& parent) {
 }
 
 
-bool check_IFD(const vector<ind>& pop, const vector < vector<cell>>& landscape, const vector<vector<double>>& presence) {
+bool check_IFD(const vector<ind>& pop, const landscape_t& landscape, const presence_t& presence) {
 
 
-  for (int p = 0; p < pop.size(); ++p) {
-    double present_intake = landscape[pop[p].xpos][pop[p].ypos].resource * pop[p].comp / presence[pop[p].xpos][pop[p].ypos];
-
+  for (const auto& ind : pop) {
+    const auto present_intake = landscape(ind.xpos, ind.ypos).resource * ind.comp / presence(ind.xpos, ind.ypos);
     for (int i = 0; i < landscape.size(); ++i) {
-      for (int j = 0; j < landscape[i].size(); ++j) {
-        if (present_intake < landscape[i][j].resource * pop[p].comp / (presence[i][j] + pop[p].comp)) {
-          return false;
-        }
+      if (present_intake < landscape[i].resource * ind.comp / (presence[i] + ind.comp)) {
+        return false;
       }
     }
-
-
   }
   return true;
 }
 
-double count_IFD(const vector<ind>& pop, const vector < vector<cell>>& landscape, const vector<vector<double>>& presence) {
+double count_IFD(const vector<ind>& pop, const landscape_t& landscape, const presence_t& presence) {
 
-  int count = pop.size();
-  int p = 0;
-label:
-  for (; p < pop.size(); ++p) {
-    double present_intake = landscape[pop[p].xpos][pop[p].ypos].resource * pop[p].comp / presence[pop[p].xpos][pop[p].ypos];
-
-    for (int i = 0; i < landscape.size(); ++i) {
-      for (int j = 0; j < landscape[i].size(); ++j) {
-        if (present_intake < landscape[i][j].resource * pop[p].comp / (presence[i][j] + pop[p].comp)) {
-          --count;
-          ++p;
-          goto label;
-        }
+  size_t count = pop.size();
+  for (const auto& i : pop) {
+    const auto present_intake = landscape(i.xpos, i.ypos).resource * i.comp / presence(i.xpos, i.ypos);
+    for (auto c = 0; c < landscape.size(); ++c) {
+      if (present_intake < landscape[c].resource * i.comp / (presence[c] + i.comp)) {
+        --count;
+        break;
       }
     }
-
-
   }
   return static_cast<double>(count) / pop.size();
 }
 
-double intake_variance(const vector<ind>& pop, const vector < vector<cell>>& landscape, const vector<vector<double>>& presence) {
-  vector<double> intakes;
-  int p = 0;
-  for (; p < pop.size(); ++p) {
-    //intakes.push_back(landscape[pop[p].xpos][pop[p].ypos] / static_cast<double> (presence[pop[p].xpos][pop[p].ypos]));
-    intakes.push_back(landscape[pop[p].xpos][pop[p].ypos].resource * pop[p].comp / presence[pop[p].xpos][pop[p].ypos]);
-  }
-
-  double sum = std::accumulate(intakes.begin(), intakes.end(), 0.0);
-  double m = sum / intakes.size();
-
-  double accum = 0.0;
-  std::for_each(intakes.begin(), intakes.end(), [&](const double d) {
-    accum += (d - m) * (d - m);
-    });
-
-  double stdev = sqrt(accum / (intakes.size()));
-
-  return stdev;
+double intake_variance(const vector<ind>& pop, const landscape_t& landscape, const presence_t& presence) {
+  auto lambda = [&](const ind& i) {
+    return landscape(i.xpos, i.ypos).resource * i.comp / presence(i.xpos, i.ypos);
+  };
+  const double sum = std::accumulate(pop.cbegin(), pop.cend(), 0.0, [&](double s, const ind& i) {
+    return s + lambda(i);
+  });
+  const auto mean = sum / pop.size();
+  const double accum = std::accumulate(pop.cbegin(), pop.cend(), 0.0, [&](double s, const ind& i) {
+    const auto val = lambda(i);
+    return s + (val - mean) * (val - mean);
+  });
+  return sqrt(accum / pop.size());
 }
 
-void landscape_setup(vector<vector<cell>>& landscape, Param param_) {
-  double cells = static_cast<double>(landscape.size() * landscape.size());
-  for (int i = 0; i < landscape.size(); ++i) {
-    for (int j = 0; j < landscape[i].size(); ++j) {
-      //landscape[i][j] = cell(uniform_real_distribution<double>(param_.resource_min * param_.pop_size * 400.0 / (1000.0 * cells), param_.resource_max * param_.pop_size * 400 / (1000.0 * cells))(rnd::reng), 0.0);
-      landscape[i][j] = cell(uniform_real_distribution<double>(param_.resource_min, param_.resource_max)(rnd::reng),
+void landscape_setup(landscape_t& landscape, Param param_) {
+  for (cell& c : landscape) {
+      c = cell(uniform_real_distribution<double>(param_.resource_min, param_.resource_max)(rnd::reng),
         /*exponential_distribution<double>(param_.riskspread)(rnd::reng)*/0.0);
-    }
   }
 }
 
 void reproduction(vector<ind>& pop, const Param& param_) {
 
-  vector<double> fitness;
+  //vector<double> fitness;
 
-  for (int i = 0; i < pop.size(); ++i) {
-    fitness.push_back(max(0.0, pop[i].food - param_.cost * pop[i].act * param_.t_scenes - param_.cost_comp * pop[i].comp * param_.t_scenes));
-  }
+  //for (int i = 0; i < pop.size(); ++i) {
+  //  fitness.push_back(max(0.0, pop[i].food - param_.cost * pop[i].act * param_.t_scenes - param_.cost_comp * pop[i].comp * param_.t_scenes));
+  //}
+
+  //rndutils::mutable_discrete_distribution<int, rndutils::all_zero_policy_uni> rdist;
+  //rdist.mutate(fitness.cbegin(), fitness.cend());
 
   rndutils::mutable_discrete_distribution<int, rndutils::all_zero_policy_uni> rdist;
-  rdist.mutate(fitness.cbegin(), fitness.cend());
+  rdist.mutate_transform(pop.cbegin(), pop.cend(), [&](const ind& i) {
+    return max(0.0, i.food - param_.cost * i.act * param_.t_scenes - param_.cost_comp * i.comp * param_.t_scenes);
+  });
 
   vector<ind> tmp_pop(pop.size());
   uniform_int_distribution<int> pdist(0, param_.dims - 1);
@@ -256,7 +244,7 @@ void simulation(const Param& param_) {
   os.close();
 
   //landscape initialization
-  vector<vector<cell>> landscape(param_.dims, vector<cell>(param_.dims));
+  landscape_t landscape(param_.dims);
 
 
 
@@ -286,13 +274,11 @@ void simulation(const Param& param_) {
     double total_ttIFD = 0.0;
     double total_sdintake = 0.0;
 
-    vector<vector<double>> presence(param_.dims, vector<double>(param_.dims, 0.0));
+    presence_t presence(param_.dims);
     for (int i = 0; i < pop.size(); ++i) {
-      presence[pop[i].xpos][pop[i].ypos] += pop[i].comp;
+      presence(pop[i].xpos, pop[i].ypos) = pop[i].comp;
     }
-
     landscape_setup(landscape, param_);
-
 
     double time = 0.0;
     int id;
@@ -310,7 +296,7 @@ void simulation(const Param& param_) {
       while (time > eat_t) { // alternative: individuals eat continuously. Maybe let's not
         for (int p = 0; p < pop.size(); ++p) {
           if (!pop[p].dead) {
-            pop[p].food += landscape[pop[p].xpos][pop[p].ypos].resource * pop[p].comp / presence[pop[p].xpos][pop[p].ypos];
+            pop[p].food += landscape(pop[p].xpos, pop[p].ypos).resource * pop[p].comp / presence(pop[p].xpos, pop[p].ypos);
             //if(bernoulli_distribution(landscape[pop[p].xpos][pop[p].ypos].risk)(rnd::reng)) 
             //  pop[p].die(presence[pop[p].xpos][pop[p].ypos]);
           }
@@ -338,8 +324,8 @@ void simulation(const Param& param_) {
         ++count;
       
       else if (!IFD_reached) {
-        int xpos = pdist(rnd::reng);
-        int ypos = pdist(rnd::reng);
+        //int xpos = pdist(rnd::reng);
+        //int ypos = pdist(rnd::reng);
         pop[id].move(landscape, presence, param_);
         
         if (time > it_t) {
@@ -358,7 +344,7 @@ void simulation(const Param& param_) {
         std::shuffle(v.begin(), v.end(), rnd::reng);
 
         for (int i = 0; i < nrcells; ++i) {
-          landscape[v[i] % param_.dims][v[i] / param_.dims] = cell(uniform_real_distribution<double>(param_.resource_min, param_.resource_max)(rnd::reng), 0.0);
+          landscape[v[i]] = cell(uniform_real_distribution<double>(param_.resource_min, param_.resource_max)(rnd::reng), 0.0);
         }
       }
 
