@@ -135,7 +135,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cmd_line.h" />
-    <ClInclude Include="grid.hpp" />
     <ClInclude Include="parameter.h" />
     <ClInclude Include="rnd.hpp" />
     <ClInclude Include="rndutils.hpp" />
