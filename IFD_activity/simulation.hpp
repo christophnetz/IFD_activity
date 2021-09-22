@@ -81,11 +81,11 @@ void ind::move(const vector<vector<cell>>& landscape, vector<vector<double>>& pr
         std::shuffle(v.begin(), v.end(), rnd::reng);
 
         for (int i = 0; i < param_.nrexplore; ++i) {
-          potential_intake = landscape[i%param_.dims][i/param_.dims].resource * comp / (presence[i % param_.dims][i / param_.dims] + comp);
+          potential_intake = landscape[v[i]%param_.dims][v[i]/param_.dims].resource * comp / (presence[v[i] % param_.dims][v[i] / param_.dims] + comp);
           if (present_intake < potential_intake) {
             present_intake = potential_intake;
-            xpos = i % param_.dims;
-            ypos = i / param_.dims;
+            xpos = v[i] % param_.dims;
+            ypos = v[i] / param_.dims;
           }
 
         }
