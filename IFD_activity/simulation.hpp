@@ -9,7 +9,7 @@
 #include <fstream>
 #include <algorithm>
 #include <string>
-
+#include "cached.hpp"
 #include "rnd.hpp"
 
 
@@ -292,8 +292,8 @@ void simulation(const Param& param_) {
   for (int i = 0; i < param_.pop_size; ++i) {
     pop.emplace_back(pdist(rnd::reng), pdist(rnd::reng), 1, 1.7, 0.0);
   }
-  auto iota_sampler = iota_sampler_t(landscape.buf().size());
-  rndutils::mutable_discrete_distribution<int, rndutils::all_zero_policy_uni> rdist;
+  auto iota_sampler = cached_iota(landscape.buf().size(), 100'000);
+  auto rdist = cached_rdist(100'000);
   vector<double> activities;
 
   for (int g = 0; g < param_.G; ++g) {
@@ -305,7 +305,7 @@ void simulation(const Param& param_) {
     activities.push_back(param_.changerate); 
     rdist.mutate(activities.cbegin(), activities.cend());
     double total_act = std::accumulate(activities.begin(), activities.end(), 0.0);
-    exponential_distribution<double> event_dist(total_act);
+    auto event_dist = cached_exponential(total_act, 100'000);
 
     double ifd_prop = 0.0;
     double total_ttIFD = 0.0;
@@ -329,7 +329,7 @@ void simulation(const Param& param_) {
 
     for (; time < param_.t_scenes; ) {
       ++tot_iter;
-      time += event_dist(rnd::reng);
+      time += event_dist();
 
       while (time > eat_t) { // alternative: individuals eat continuously. Maybe let's not
         for (int p = 0; p < pop.size(); ++p) {
@@ -357,14 +357,14 @@ void simulation(const Param& param_) {
         }
       }
 
-      id = rdist(rnd::reng);
+      id = rdist();
       if (id == pop.size())
         ++count;
       
       else if (!IFD_reached) {
         //int xpos = pdist(rnd::reng);
         //int ypos = pdist(rnd::reng);
-        pop[id].move(landscape, presence, param_, iota_sampler(rnd::reng));
+        pop[id].move(landscape, presence, param_, iota_sampler());
         
         if (time > it_t) {
           IFD_reached = check_IFD(pop, landscape, presence);
@@ -377,7 +377,7 @@ void simulation(const Param& param_) {
         count = 0;
         int nrcells = static_cast<int>(round(param_.dims * param_.dims * param_.changeprop));
 
-        auto& iota = iota_sampler(rnd::reng);
+        const auto& iota = iota_sampler();
         for (int i = 0; i < nrcells; ++i) {
           landscape.buf()[iota[i]] = cell(uniform_real_distribution<double>(param_.resource_min, param_.resource_max)(rnd::reng), 0.0);
         }
