@@ -325,9 +325,10 @@ void simulation(const Param& param_) {
     bool IFD_reached = false;
     double time_to_IFD = 0.0;
     int count = 0;
+    size_t tot_iter = 0;
 
     for (; time < param_.t_scenes; ) {
-
+      ++tot_iter;
       time += event_dist(rnd::reng);
 
       while (time > eat_t) { // alternative: individuals eat continuously. Maybe let's not
@@ -347,12 +348,12 @@ void simulation(const Param& param_) {
         if (g == param_.G - 1) {
 
 
-          for (int i = 0; i < pop.size(); ++i) {
+          //for (int i = 0; i < pop.size(); ++i) {
 
-            ofs5 << g << "\t" << "\t" << eat_t << "\t" << pop[i].comp << "\t" << pop[i].act << "\t" << pop[i].xpos << "\t"
-              << pop[i].ypos << "\t" << pop[i].food << "\t" << pop[i].updateintake(landscape, presence) << "\n";
+          //  ofs5 << g << "\t" << "\t" << eat_t << "\t" << pop[i].comp << "\t" << pop[i].act << "\t" << pop[i].xpos << "\t"
+          //    << pop[i].ypos << "\t" << pop[i].food << "\t" << pop[i].updateintake(landscape, presence) << "\n";
 
-          }
+          //}
         }
       }
 
@@ -407,7 +408,7 @@ void simulation(const Param& param_) {
     }
 
     reproduction(pop, tmp_pop, param_);
-    cout << g << endl;
+    cout << g << ' ' << tot_iter << endl;
   }
   ofs1.close();
   ofs2.close();
