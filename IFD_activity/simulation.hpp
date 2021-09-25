@@ -82,12 +82,14 @@ void ind::move(const vector<vector<cell>>& landscape, vector<vector<double>>& pr
         std::iota(v.begin(), v.end(), 0);
         std::shuffle(v.begin(), v.end(), rnd::reng);
 
+
         for (int i = 0; i < param_.nrexplore; ++i) { //the individual searches a number of randomple chosen cells and computes the intake rates and move to the highest yielding patch,including the present one it is on
-          potential_intake = landscape[i%param_.dims][i/param_.dims].resource * comp / (presence[i % param_.dims][i / param_.dims] + comp);
+          potential_intake = landscape[v[i]%param_.dims][v[i]/param_.dims].resource * comp / (presence[v[i] % param_.dims][v[i] / param_.dims] + comp);
+
           if (present_intake < potential_intake) {
             present_intake = potential_intake;
-            xpos = i % param_.dims;
-            ypos = i / param_.dims;
+            xpos = v[i] % param_.dims;
+            ypos = v[i] / param_.dims;
           }
 
         }
