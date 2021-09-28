@@ -29,8 +29,8 @@ struct cell {
 template <typename T>
 class Grid {
 public:
-  explicit Grid(int dim) : dim_(dim), buf_(size_t(dim)* dim) {}
-  Grid(int dim, const T& val) : dim_(dim), buf_(size_t(dim)* dim, val) {}
+  explicit Grid(int dim) : dim_(dim), buf_(size_t(dim) * dim) {}
+  Grid(int dim, const T& val) : dim_(dim), buf_(size_t(dim) * dim, val) {}
 
   // access to underlying linear buffer
   const auto& buf() const noexcept { return buf_; }
@@ -38,11 +38,11 @@ public:
 
   // 2D stuff
   int dim() const noexcept { return dim_; }
-  auto& operator()(int x, int y) { return buf_[size_t(x) * dim_ + y]; }
-  const auto& operator()(int x, int y) const { return buf_[size_t(x) * dim_ + y]; }
+  auto& operator()(int x, int y) { return buf_[size_t(y) * dim_ + x]; }
+  const auto& operator()(int x, int y) const { return buf_[size_t(y) * dim_ + x]; }
 
   // conversion linear <-> 2D
-  size_t linear_idx(int x, int y) const noexcept { return size_t(x) * dim_ + y; }
+  size_t linear_idx(int x, int y) const noexcept { return size_t(y) * dim_ + x; }
   std::pair<int, int> coor(size_t idx) const noexcept {
     return { static_cast<int>(idx) % dim_, static_cast<int>(idx) / dim_ };
   }
