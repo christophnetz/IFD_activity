@@ -306,12 +306,12 @@ void simulation(const Param& param_) {
         if (g == param_.G - 1) {
 
 
-          //for (int i = 0; i < pop.size(); ++i) {
+          for (int i = 0; i < pop.size(); ++i) {
 
-          //  ofs5 << g << "\t" << "\t" << eat_t << "\t" << pop[i].comp << "\t" << pop[i].act << "\t" << pop[i].xpos << "\t"
-          //    << pop[i].ypos << "\t" << pop[i].food << "\t" << pop[i].updateintake(landscape, presence) << "\n";
+            ofs5 << g << "\t" << eat_t << "\t" << pop[i].comp << "\t" << pop[i].act << "\t" << pop[i].xpos << "\t"
+              << pop[i].ypos << "\t" << pop[i].food << "\t" << pop[i].updateintake(landscape, presence) << "\n";
 
-          //}
+          }
         }
       }
 
@@ -367,6 +367,8 @@ void simulation(const Param& param_) {
   }
   ofs1.close();
   ofs2.close();
+  ofs3.close();
+
   cout << "End";
 
 
