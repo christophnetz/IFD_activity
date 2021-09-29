@@ -17,14 +17,14 @@
 using namespace cine2;
 using namespace std;
 
-
-struct cell {
-  cell() {}
-  cell(double resource, double risk) : resource(resource), risk(risk) {}
-
-  double resource;
-  double risk;
-};
+//
+//struct cell {
+//  cell() {}
+//  cell(double resource, double risk) : resource(resource), risk(risk) {}
+//
+//  double resource;
+//  double risk;
+//};
 
 
 template <typename T>
@@ -55,7 +55,7 @@ private:
 
 
 
-using landscape_t = Grid<cell>;
+using landscape_t = Grid<double>;
 using presence_t = Grid<double>;
 
 
@@ -79,7 +79,7 @@ private:
 struct ind {
 
   ind() {}
-  ind(int x, int y, double a, double c, double b) : xpos(x), ypos(y), act(a), comp(c), bold(b) {}
+  ind(int x, int y, double a, double c) : xpos(x), ypos(y), act(a), comp(c) {}
 
   void mutate(bernoulli_distribution& mutate, normal_distribution<double>& mshape);
 
@@ -92,20 +92,19 @@ struct ind {
   double food = 0.0;
   double act;
   double comp;
-  double bold;
   int xpos;
   int ypos;
 };
 
 
 double ind::updateintake(const landscape_t& landscape, presence_t& presence) {
-  return landscape(xpos, ypos).resource * comp / presence(xpos, ypos) /*+ bold * landscape[xpos][ypos].risk*/;
+  return landscape(xpos, ypos) * comp / presence(xpos, ypos);
 
 }
 
 void ind::move(const landscape_t& landscape, presence_t& presence, Param param_, const std::vector<int>& iota) {
 
-    double present_intake = landscape(xpos, ypos).resource * comp / (presence(xpos, ypos)) /*+ bold * landscape[xpos][ypos].risk*/;
+    double present_intake = landscape(xpos, ypos) * comp / (presence(xpos, ypos));
     double potential_intake;
     int former_xpos = xpos;
     int former_ypos = ypos;
@@ -113,7 +112,7 @@ void ind::move(const landscape_t& landscape, presence_t& presence, Param param_,
     auto bestidx = landscape.linear_idx(xpos, ypos);
     for (int i = 0; i < param_.nrexplore; ++i) {
       const auto idx = iota[i];
-      potential_intake = landscape.buf()[idx].resource * comp / (presence.buf()[idx] + comp);
+      potential_intake = landscape.buf()[idx] * comp / (presence.buf()[idx] + comp);
       if (present_intake < potential_intake) {
         present_intake = potential_intake;
         bestidx = idx;
@@ -136,11 +135,7 @@ void ind::mutate(bernoulli_distribution& mrate, normal_distribution<double>& msh
     act = max(act, 0.0);
   }
 
-  if (mrate(rnd::reng)) {
-    bold += mshape(rnd::reng);
-    bold = max(bold, 0.0);
-    bold = min(bold, 1.0);
-  }
+
 
   if (mrate(rnd::reng)) {
     comp += mshape(rnd::reng);
@@ -152,7 +147,6 @@ void ind::springoff(const ind& parent) {
   food = 0.0;
   act = parent.act;
   comp = parent.comp;
-  bold = parent.bold;
 }
 
 
@@ -160,9 +154,9 @@ bool check_IFD(const vector<ind>& pop, const landscape_t& landscape, const prese
 
 
   for (const auto& ind : pop) {
-    const auto present_intake = landscape(ind.xpos, ind.ypos).resource * ind.comp / presence(ind.xpos, ind.ypos);
+    const auto present_intake = landscape(ind.xpos, ind.ypos) * ind.comp / presence(ind.xpos, ind.ypos);
     for (int i = 0; i < landscape.buf().size(); ++i) {
-      if (present_intake < landscape.buf()[i].resource * ind.comp / (presence.buf()[i] + ind.comp)) {
+      if (present_intake < landscape.buf()[i] * ind.comp / (presence.buf()[i] + ind.comp)) {
         return false;
       }
     }
@@ -174,9 +168,9 @@ double count_IFD(const vector<ind>& pop, const landscape_t& landscape, const pre
 
   size_t count = pop.size();
   for (const auto& i : pop) {
-    const auto present_intake = landscape(i.xpos, i.ypos).resource * i.comp / presence(i.xpos, i.ypos);
+    const auto present_intake = landscape(i.xpos, i.ypos) * i.comp / presence(i.xpos, i.ypos);
     for (auto c = 0; c < landscape.buf().size(); ++c) {
-      if (present_intake < landscape.buf()[c].resource * i.comp / (presence.buf()[c] + i.comp)) {
+      if (present_intake < landscape.buf()[c] * i.comp / (presence.buf()[c] + i.comp)) {
         --count;
         break;
       }
@@ -187,7 +181,7 @@ double count_IFD(const vector<ind>& pop, const landscape_t& landscape, const pre
 
 double intake_variance(const vector<ind>& pop, const landscape_t& landscape, const presence_t& presence) {
   auto lambda = [&](const ind& i) {
-    return landscape(i.xpos, i.ypos).resource * i.comp / presence(i.xpos, i.ypos);
+    return landscape(i.xpos, i.ypos) * i.comp / presence(i.xpos, i.ypos);
   };
   const double sum = std::accumulate(pop.cbegin(), pop.cend(), 0.0, [&](double s, const ind& i) {
     return s + lambda(i);
@@ -201,8 +195,8 @@ double intake_variance(const vector<ind>& pop, const landscape_t& landscape, con
 }
 
 void landscape_setup(landscape_t& landscape, Param param_) {
-  for (cell& c : landscape.buf()) {
-    c = cell(uniform_real_distribution<double>(param_.resource_min, param_.resource_max)(rnd::reng), 0.0);
+  for (double& c : landscape.buf()) {
+    c = uniform_real_distribution<double>(param_.resource_min, param_.resource_max)(rnd::reng);
   }
 }
 
@@ -238,7 +232,6 @@ void simulation(const Param& param_) {
   std::ofstream ofs1(param_.outdir + "activities.txt", std::ofstream::out);
   std::ofstream ofs2(param_.outdir + "ecology.txt", std::ofstream::out);
   std::ofstream ofs3(param_.outdir + "comp.txt", std::ofstream::out);
-  std::ofstream ofs4(param_.outdir + "bold.txt", std::ofstream::out);
   std::ofstream ofs5(param_.outdir + "_landscape.txt", std::ofstream::out);
 
   ofs5 << "gen\tscene\ttime\tcomp\tact\txpos\typos\tfood\tintake\n";
@@ -260,7 +253,7 @@ void simulation(const Param& param_) {
   vector<ind> tmp_pop(param_.pop_size);
   auto pdist = std::uniform_int_distribution<int>(0, param_.dims - 1);
   for (int i = 0; i < param_.pop_size; ++i) {
-    pop.emplace_back(pdist(rnd::reng), pdist(rnd::reng), 0.5, 1, 0.0);
+    pop.emplace_back(pdist(rnd::reng), pdist(rnd::reng), 0.5, 1);
   }
   auto iota_sampler = cached_iota(landscape.buf().size(), 100'000);
   auto rdist = cached_rdist(100'000);
@@ -302,7 +295,7 @@ void simulation(const Param& param_) {
 
       while (time > eat_t) { // alternative: individuals eat continuously. Maybe let's not
         for (int p = 0; p < pop.size(); ++p) {
-            pop[p].food += landscape(pop[p].xpos, pop[p].ypos).resource * pop[p].comp / presence(pop[p].xpos, pop[p].ypos);
+            pop[p].food += landscape(pop[p].xpos, pop[p].ypos) * pop[p].comp / presence(pop[p].xpos, pop[p].ypos);
         }
 
 
@@ -344,7 +337,7 @@ void simulation(const Param& param_) {
 
         const auto& iota = iota_sampler();
         for (int i = 0; i < nrcells; ++i) {
-          landscape.buf()[iota[i]] = cell(uniform_real_distribution<double>(param_.resource_min, param_.resource_max)(rnd::reng), 0.0);
+          landscape.buf()[iota[i]] = uniform_real_distribution<double>(param_.resource_min, param_.resource_max)(rnd::reng);
         }
       }
 
@@ -359,16 +352,13 @@ void simulation(const Param& param_) {
     if (g % 1 == 0) {
       ofs1 << g << "\t";
       ofs3 << g << "\t";
-      ofs4 << g << "\t";
 
       for (int q = 0; q < pop.size(); q += max(1, static_cast<int>(pop.size() / 1000))) {
         ofs1 << pop[q].act << "\t";
         ofs3 << pop[q].comp << "\t";
-        ofs4 << pop[q].bold << "\t";
       }
       ofs1 << "\n";
       ofs3 << "\n";
-      ofs4 << "\n";
       ofs2 << g << "\t" << ifd_prop << "\t" << total_ttIFD << "\t" << total_sdintake << "\t\n";
     }
 

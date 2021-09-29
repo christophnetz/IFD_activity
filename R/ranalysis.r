@@ -3,7 +3,7 @@ library(ggplot2)
 library(scales)
 library(readr)
 library(tidyverse)
-setwd("C:/Users/user/Desktop/IFDxpersonality/IFD_activity/IFD_activity")
+setwd("C:/Users/P285100/Desktop/ifd2/IFD_activity/IFD_activity")
 
 
 strID <- "Evol8"
