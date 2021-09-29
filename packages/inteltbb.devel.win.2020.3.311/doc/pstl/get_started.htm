@@ -1,0 +1,1378 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="DC.Type" content="topic"/>
+        <meta name="DC.Title" content="Get Started with Parallel STL"/>
+        <meta name="prodname" content=""/>
+        <meta name="version" content="XX.XX"/>
+        <meta name="series" content=""/>
+        <meta name="DC.Format" content="XHTML"/>
+        <meta name="DC.Identifier" content="get_started"/>
+        <meta name="DC.Language" content="en-US"/>
+        <title>Get Started with Parallel STL</title>
+        <link rel="stylesheet" type="text/css" href="resources/intel_gsp_styles.css"/>
+        <meta http-equiv="X-UA-Compatible" content="IE=Edge;chrome=1"/>
+        <!-- BEGIN SCRIPTS FOR EXPAND/COLLAPSE FUNCTIONALITY -->
+        <script src="resources/jquery-1.11.1.min.js"><!----></script>
+        <script src="resources/hide-show.js"><!----></script>
+        <!-- END SCRIPTS FOR EXPAND/COLLAPSE FUNCTIONALITY -->
+        <!-- Prism script to support syntax highlighting-->
+        <script src="resources/prism/prism.js"><!----></script>
+        <!-- prism.css stylesheet to support syntax highlighting-->
+        <link href="resources/prism/prism.css" rel="stylesheet"/>
+    </head>
+
+
+    <body class="titlepage" id="get_started"><a name="get_started"><!-- --></a>
+        <a name="top"></a>
+        <div id="banner">
+            <div id="bannerblock">
+            <img src="resources/intel_logo.png" class="intellogo" alt="Intel logo"/>
+            <img src="resources/pstl_icon.png" class="componentlogo"/>
+            <h1 class="title">Get Started with Parallel STL</h1>
+            </div>
+        </div>
+        <div id="contentblock">
+            <div id="mainmenu">
+            <h3>Contents</h3>
+                <p><a class="mainmenulinks" href="#GUID-2A0F6785-6D41-4D6D-A9C5-1D7755171B91"></a></p>
+                <p><a class="mainmenulinks" href="#prereq">Prerequisites</a></p>
+                <p><a class="mainmenulinks" href="#using">Using Parallel STL</a></p>
+                <p><a class="mainmenulinks" href="#examples">Examples</a></p>
+                <p><a class="mainmenulinks" href="#algorithms">Implemented Algorithms</a></p>
+                <p><a class="mainmenulinks" href="#limitations">Known limitations</a></p>
+                <p><a class="mainmenulinks" href="#legal">Legal Information</a></p>
+            </div>
+
+            <div id="GUID-2A0F6785-6D41-4D6D-A9C5-1D7755171B91">
+            <p>Parallel STL is an implementation of the C++ standard library algorithms with support for execution
+               policies, as specified in ISO/IEC 14882:2017 standard, commonly called C++17. The implementation
+               also supports the unsequenced execution policy specified in Parallelism TS version 2 and proposed
+               for the next version of the C++ standard in the C++ working group paper P1001R1.</p>
+            <p>Parallel STL offers efficient support for both parallel and vectorized execution
+               of algorithms for Intel&reg; processors. For sequential execution, it relies on an available
+               implementation of the C++ standard library.</p>
+            <p>Parallel STL is available as a part of Intel&reg; Parallel Studio XE and Intel&reg; System Studio.</p>
+            </div>
+            <div id="prereq">
+            <h2>Prerequisites</h2>
+            <p>To use Parallel STL, you must have the following software installed:</p>
+            <ul>
+                <li>C++ compiler with:<ul>
+                    <li>Support for C++11</li>
+                    <li>Support for OpenMP* 4.0 SIMD constructs</li>
+                </ul>
+                </li>
+                <li>Intel&reg; Threading Building Blocks (Intel&reg; TBB) 2019</li>
+            </ul>
+            <p>The latest version of the Intel&reg; C++ Compiler is recommended for better performance of Parallel STL algorithms,
+               comparing to previous compiler versions.</p>
+            <p>To build an application that uses Parallel STL on the command line, you need to set the environment variables for compilation and linkage.
+               You can do this by calling suite-level environment scripts such as <code>compilervars.{sh|csh|bat}</code>, or you can set just the Parallel STL
+               environment variables by running <code style="white-space: nowrap;">pstlvars.{sh|csh|bat}</code> in
+               <code>&lt;install_dir&gt;/{linux|mac|windows}/pstl/bin</code>.</p>
+            <p align="left"><code>&lt;<i>install_dir</i>&gt;</code> is the installation directory, by default, it is:</p>
+            <p><b>For Linux* and macOS*:</b></p>
+            <ul>
+                <li>For super-users:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>/opt/intel/compilers_and_libraries_&lt;version&gt;</code></li>
+                <li>For ordinary users:&nbsp;&nbsp;<code>$HOME/intel/compilers_and_libraries_&lt;version&gt;</code></li>
+            </ul>
+            <p><b>For Windows*:</b></p>
+            <ul>
+                <li><code>&lt;Program Files&gt;\IntelSWTools\compilers_and_libraries_&lt;version&gt;</code></li>
+            </ul>
+            </div>
+            <div id="using">
+            <h2>Using Parallel STL</h2>
+            <p>Follow these steps to add Parallel STL to your application:</p>
+            <ol>
+                <li>
+                    <p>Add the <code>&lt;install_dir&gt;/include</code> folder to
+                    the compiler include paths. You can do this by calling the <code>pstlvars</code> script.</p>
+                </li>
+                <li>
+                    <p>Add <code>#include "pstl/execution"</code> to your code. Then add a subset of the following set of lines, depending on the algorithms you intend to use:</p>
+                    <ul>
+                        <li><code class="language-cpp">#include "pstl/algorithm"</code></li>
+                        <li><code class="language-cpp">#include "pstl/numeric"</code></li>
+                        <li><code class="language-cpp">#include "pstl/memory"</code></li>
+                    </ul>
+                </li>
+                <li>When using algorithms and execution policies, specify the namespaces <code>std::execution</code> in case of there is no vendor implementation of C++17 standard
+                    library or <code>pstl::execution</code> otherwise. See the 'Examples' section below.</li>
+                <li>
+                    <p>For any of the implemented algorithms, pass one of the values <code>seq</code>, <code>unseq</code>, <code>par</code> or <code>par_unseq</code> as
+                    the first parameter in a call to the algorithm to specify the desired
+                    execution policy. The policies have
+                    the following meaning:</p>
+                    <p></p>
+                    <table class="tablecontrol" style="width:100%">
+                        <tr>
+                            <th>
+                                <p>Execution policy</p>
+                            </th>
+                            <th>
+                                <p>Meaning</p>
+                            </th>
+                        </tr>
+                        <tr>
+                            <td>
+                                <p><code>seq</code></p>
+                            </td>
+                            <td>
+                                <p>
+                                Sequential execution.</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <p><code>unseq</code></p>
+                            </td>
+                            <td>
+                                <p>
+                                Unsequenced SIMD execution. This policy requires that all functions
+                                provided are SIMD-safe.</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <p><code>par</code></p>
+                            </td>
+                            <td>
+                                <p>Parallel execution by multiple threads.</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <p><code>par_unseq</code></p>
+                            </td>
+                            <td>
+                                <p>Combined effect of <code>unseq</code> and <code>par</code>.</p>
+                            </td>
+                        </tr>
+                    </table>
+                    <p></p>
+                </li>
+                <li>
+                    <p>Compile the code as C++11 (or later) and using compiler options for vectorization:</p>
+                    <ul>
+                        <li>For the Intel&reg; C++ Compiler:
+                            <ul>
+                                <li>For Linux* and macOS*: <code>-qopenmp-simd</code></li>
+                                <li>For Windows*: <code>/Qopenmp-simd</code></li>
+                            </ul>
+                        </li>
+                        <li>For other compilers, find a switch that enables OpenMP* 4.0 SIMD constructs.</li>
+                    </ul>
+                    <p>To get good performance, specify the target platform. For the Intel&reg; C++ Compiler, some of the relevant options are:
+                        <ul>
+                            <li>For Linux* and macOS*: <code>-xHOST</code>, <code>-xSSE4.1</code>, <code>-xCORE-AVX2</code>, <code>-xMIC-AVX512</code>.</li>
+                            <li>For Windows*: <code>/QxHOST</code>, <code>/QxSSE4.1</code>, <code>/QxCORE-AVX2</code>, <code>/QxMIC-AVX512</code>.</li>
+                        </ul>
+                       If using a different compiler, see its documentation.</p>
+                </li>
+                <li>
+                    <p>Link with the Intel TBB dynamic library for parallelism. For the Intel&reg; C++ Compiler, use the options:</p>
+                        <ul>
+                            <li>For Linux* and macOS*: <code>-tbb</code></li>
+                            <li>For Windows*: <code>/Qtbb</code> (optional, this should be handled by <code>#pragma comment(lib, &lt;libname&gt;)</code>)</li>
+                        </ul>
+                </li>
+            </ol>
+            </div>
+            <div id="version_macros">
+            <h4>Version Macros</h4>
+                <p>Macros related to versioning, as described below. You should not redefine these macros.</p>
+                <p><code>PSTL_VERSION</code></p>
+                <p>Current Parallel STL version. The value is a decimal numeral of the form <i>xyy</i> where <i>x</i> is the major version number and <i>yy</i> is the minor version number.</p>
+                <p><code>PSTL_VERSION_MAJOR</code></p>
+                <p>PSTL_VERSION/100; that is, the major version number.</p>
+                <p><code>PSTL_VERSION_MINOR</code></p>
+                <p>PSTL_VERSION - PSTL_VERSION_MAJOR * 100; that is, the minor version number.</p>
+            </div>
+            <div id="macros">
+            <h4>Macros</h4>
+                <p><code>PSTL_USE_PARALLEL_POLICIES</code></p>
+                <p>
+                <p>This macro controls the use of parallel policies.</p>
+                <p>When set to 0, it disables the par and par_unseq policies, making their use a compilation error.
+                It's recommended for code that only uses vectorization with unseq policy, to avoid dependency on the TBB runtime library.</p>
+                <p>When the macro is not defined (default) or evaluates to a non-zero value all execution policies are enabled.</p>
+                </p>
+
+                <p><code>PSTL_USE_NONTEMPORAL_STORES</code></p>
+                <p>
+                <p>This macro enables the use of <code class="language-cpp">#pragma vector nontemporal</code> in the algorithms <code>std::copy</code>, <code>std::copy_n</code>,
+                    <code>std::fill</code>, <code>std::fill_n</code>, <code>std::generate</code>, <code>std::generate_n</code>, <code>std::move</code>, <code>std::rotate</code>,
+                    <code>std::rotate_copy</code>, <code>std::swap_ranges</code> with the unseq policy. For further details about the pragma, see the <b>User and Reference Guide
+                    for the Intel&reg; C++ Compiler </b> at <a href="https://software.intel.com/en-us/node/524559"> https://software.intel.com/en-us/node/524559</a>.
+                </p>
+                <p>If the macro evaluates to a non-zero value, the use of <code class="language-cpp">#pragma vector nontemporal</code> is enabled.</p>
+                <p>When the macro is not defined (default) or set to 0, the macro does nothing.</p>
+                </p>
+
+                <p><code>PSTL_USAGE_WARNINGS</code></p>
+                <p>
+                <p>This macro enables Parallel STL to emit compile-time messages, such as warnings about an algorithm not supporting a certain execution policy.</p>
+                <p>When set to 1, the macro allows the implementation to emit usage warnings. When the macro is not defined (default) or evaluates to zero, usage warnings are disabled.</p>
+                </p>
+
+            </div>
+            <div id="examples">
+            <h2>Examples</h2>
+            <p><b>Example 1</b></p>
+            <p>The following code calls vectorized <code>copy</code>:</p>
+            <pre><code class="language-cpp">#include "pstl/execution"
+#include "pstl/algorithm"
+void foo(float* a, float* b, int n) {
+    std::copy(pstl::execution::unseq, a, a+n, b);
+}</code></pre>
+            <p><b>Example 2</b></p>
+                            <p>This example calls the parallelized version of <code>fill_n</code>:</p>
+                            <pre><code class="language-cpp">#include &lt;vector&gt;
+#include "pstl/execution"
+#include "pstl/algorithm"
+
+int main()
+{
+    std::vector&lt;int&gt; data(10000000);
+    std::fill_n(pstl::execution::par_unseq, data.begin(), data.size(), -1);  // Fill the vector with -1
+
+    return 0;
+}</code></pre>
+            </div>
+            <div id="algorithms">
+            <h2>Algorithms</h2>
+            <p>The following table specifies whether parallel and unsequenced execution are supported for each of the C++17 algorithms accepting execution policies. Using an unsupported combination of algorithm and execution policy will result in sequential execution.</p>
+            <p></p>
+            <table class="tablecontrol" style="width:100%">
+            <tbody>
+                <tr>
+                    <th>
+                    <p>Algorithm</p>
+                    </th>
+                    <th>
+                    <p>Algorithm page at cppreference.com</p>
+                    </th>
+                    <th>
+                    <p>Implementation</p>
+                    </th>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>adjacent_difference</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/adjacent_difference">
+                    http://en.cppreference.com/w/cpp/algorithm/adjacent_difference</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>adjacent_find</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/adjacent_find">
+                    http://en.cppreference.com/w/cpp/algorithm/adjacent_find</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>all_of</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/all_any_none_of">
+                    http://en.cppreference.com/w/cpp/algorithm/all_any_none_of</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>any_of</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/all_any_none_of">
+                    http://en.cppreference.com/w/cpp/algorithm/all_any_none_of</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>copy</code></p>
+                    </td>
+                    <td>
+                    <p><a href="http://en.cppreference.com/w/cpp/algorithm/copy">
+                    http://en.cppreference.com/w/cpp/algorithm/copy</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>copy_if</code></p>
+                    </td>
+                    <td>
+                    <p><a href="http://en.cppreference.com/w/cpp/algorithm/copy">
+                    http://en.cppreference.com/w/cpp/algorithm/copy</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>copy_n</code></p>
+                    </td>
+                    <td>
+                    <p><a href="http://en.cppreference.com/w/cpp/algorithm/copy_n">
+                    http://en.cppreference.com/w/cpp/algorithm/copy_n</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>count</code></p>
+                    </td>
+                    <td>
+                    <p><a href="http://en.cppreference.com/w/cpp/algorithm/count">
+                    http://en.cppreference.com/w/cpp/algorithm/count</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>count_if</code></p>
+                    </td>
+                    <td>
+                    <p><a href="http://en.cppreference.com/w/cpp/algorithm/count">
+                    http://en.cppreference.com/w/cpp/algorithm/count</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>destroy</code></p>
+                    </td>
+                    <td>
+                    <p><a href="http://en.cppreference.com/w/cpp/memory/destroy">
+                    http://en.cppreference.com/w/cpp/memory/destroy</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>destroy_n</code></p>
+                    </td>
+                    <td>
+                    <p><a href="http://en.cppreference.com/w/cpp/memory/destroy_n">
+                    http://en.cppreference.com/w/cpp/memory/destroy_n</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>equal</code></p>
+                    </td>
+                    <td>
+                    <p><a href="http://en.cppreference.com/w/cpp/algorithm/equal">
+                    http://en.cppreference.com/w/cpp/algorithm/equal</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>exclusive_scan</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/exclusive_scan">
+                    http://en.cppreference.com/w/cpp/algorithm/exclusive_scan</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>fill</code></p>
+                    </td>
+                    <td>
+                    <p><a href="http://en.cppreference.com/w/cpp/algorithm/fill">
+                    http://en.cppreference.com/w/cpp/algorithm/fill</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>fill_n</code></p>
+                    </td>
+                    <td>
+                    <p><a href="http://en.cppreference.com/w/cpp/algorithm/fill_n">
+                    http://en.cppreference.com/w/cpp/algorithm/fill_n</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>find</code></p>
+                    </td>
+                    <td>
+                    <p><a href="http://en.cppreference.com/w/cpp/algorithm/find">
+                    http://en.cppreference.com/w/cpp/algorithm/find</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>find_end</code></p>
+                    </td>
+                    <td>
+                    <p><a href="http://en.cppreference.com/w/cpp/algorithm/find_end">
+                    http://en.cppreference.com/w/cpp/algorithm/find_end</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>find_first_of</code></p>
+                    </td>
+                    <td>
+                    <p><a href="http://en.cppreference.com/w/cpp/algorithm/find_first_of">
+                    http://en.cppreference.com/w/cpp/algorithm/find_first_of</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>find_if</code></p>
+                    </td>
+                    <td>
+                    <p><a href="http://en.cppreference.com/w/cpp/algorithm/find">
+                    http://en.cppreference.com/w/cpp/algorithm/find</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>find_if_not</code></p>
+                    </td>
+                    <td>
+                    <p><a href="http://en.cppreference.com/w/cpp/algorithm/find">
+                    http://en.cppreference.com/w/cpp/algorithm/find</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>for_each</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/for_each">
+                    http://en.cppreference.com/w/cpp/algorithm/for_each</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>for_each_n</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/for_each_n">
+                    http://en.cppreference.com/w/cpp/algorithm/for_each_n</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>generate</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/generate">
+                    http://en.cppreference.com/w/cpp/algorithm/generate</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>generate_n</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/generate_n">
+                    http://en.cppreference.com/w/cpp/algorithm/generate_n</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>includes</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/includes">
+                    http://en.cppreference.com/w/cpp/algorithm/includes</a></p>
+                    </td>
+                    <td>
+                    <p>parallel</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>inclusive_scan</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/inclusive_scan">
+                    http://en.cppreference.com/w/cpp/algorithm/inclusive_scan</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>inplace_merge</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/inplace_merge">
+                    http://en.cppreference.com/w/cpp/algorithm/inplace_merge</a></p>
+                    </td>
+                    <td>
+                    <p>parallel</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>is_heap</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/is_heap">
+                    http://en.cppreference.com/w/cpp/algorithm/is_heap</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>is_heap_until</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/is_heap_until">
+                    http://en.cppreference.com/w/cpp/algorithm/is_heap_until</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>is_partitioned</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/is_partitioned">
+                    http://en.cppreference.com/w/cpp/algorithm/is_partitioned</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>is_sorted</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/is_sorted">
+                    http://en.cppreference.com/w/cpp/algorithm/is_sorted</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>is_sorted_until</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/is_sorted_until">
+                    http://en.cppreference.com/w/cpp/algorithm/is_sorted_until</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>lexicographical_compare</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/lexicographical_compare">
+                    http://en.cppreference.com/w/cpp/algorithm/lexicographical_compare</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>max_element</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/max_element">
+                    http://en.cppreference.com/w/cpp/algorithm/max_element</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>merge</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/merge">
+                    http://en.cppreference.com/w/cpp/algorithm/merge</a></p>
+                    </td>
+                    <td>
+                    <p>parallel</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>min_element</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/min_element">
+                    http://en.cppreference.com/w/cpp/algorithm/min_element</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>minmax_element</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/minmax_element">
+                    http://en.cppreference.com/w/cpp/algorithm/minmax_element</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>mismatch</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/mismatch">
+                    http://en.cppreference.com/w/cpp/algorithm/mismatch</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>move</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/move">
+                    http://en.cppreference.com/w/cpp/algorithm/move</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>none_of</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/all_any_none_of">
+                    http://en.cppreference.com/w/cpp/algorithm/all_any_none_of</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>nth_element</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/nth_element">
+                    http://en.cppreference.com/w/cpp/algorithm/nth_element</a></p>
+                    </td>
+                    <td>
+                    <p>parallel</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>partial_sort</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/partial_sort">
+                    http://en.cppreference.com/w/cpp/algorithm/partial_sort</a></p>
+                    </td>
+                    <td>
+                    <p>parallel</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>partial_sort_copy</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/partial_sort_copy">
+                    http://en.cppreference.com/w/cpp/algorithm/partial_sort_copy</a></p>
+                    </td>
+                    <td>
+                    <p>parallel</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>partition</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/partition">
+                    http://en.cppreference.com/w/cpp/algorithm/partition</a></p>
+                    </td>
+                    <td>
+                    <p>parallel</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>partition_copy</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/partition_copy">
+                    http://en.cppreference.com/w/cpp/algorithm/partition_copy</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>reduce</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/reduce">
+                    http://en.cppreference.com/w/cpp/algorithm/reduce</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>remove</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/remove">
+                    http://en.cppreference.com/w/cpp/algorithm/remove</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>remove_copy</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/remove_copy">
+                    http://en.cppreference.com/w/cpp/algorithm/remove_copy</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>remove_copy_if</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/remove_copy">
+                    http://en.cppreference.com/w/cpp/algorithm/remove_copy</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>remove_if</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/remove">
+                    http://en.cppreference.com/w/cpp/algorithm/remove</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>replace</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/replace">
+                    http://en.cppreference.com/w/cpp/algorithm/replace</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>replace_copy</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/replace_copy">
+                    http://en.cppreference.com/w/cpp/algorithm/replace_copy</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>replace_copy_if</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/replace_copy">
+                    http://en.cppreference.com/w/cpp/algorithm/replace_copy</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>replace_if</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/replace">
+                    http://en.cppreference.com/w/cpp/algorithm/replace</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>reverse</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/reverse">
+                    http://en.cppreference.com/w/cpp/algorithm/reverse</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>reverse_copy</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/reverse_copy">
+                    http://en.cppreference.com/w/cpp/algorithm/reverse_copy</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>rotate</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/rotate">
+                    http://en.cppreference.com/w/cpp/algorithm/rotate</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>rotate_copy</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/rotate_copy">
+                    http://en.cppreference.com/w/cpp/algorithm/rotate_copy</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>search</code></p>
+                    </td>
+                    <td>
+                    <p><a href="http://en.cppreference.com/w/cpp/algorithm/search">
+                    http://en.cppreference.com/w/cpp/algorithm/search</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>search_n</code></p>
+                    </td>
+                    <td>
+                    <p><a href="http://en.cppreference.com/w/cpp/algorithm/search_n">
+                    http://en.cppreference.com/w/cpp/algorithm/search_n</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>set_difference</code></p>
+                    </td>
+                    <td>
+                    <p><a href="http://en.cppreference.com/w/cpp/algorithm/set_difference">
+                    http://en.cppreference.com/w/cpp/algorithm/set_difference</a></p>
+                    </td>
+                    <td>
+                    <p>parallel</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>set_intersection</code></p>
+                    </td>
+                    <td>
+                    <p><a href="http://en.cppreference.com/w/cpp/algorithm/set_intersection">
+                    http://en.cppreference.com/w/cpp/algorithm/set_intersection</a></p>
+                    </td>
+                    <td>
+                    <p>parallel</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>set_symmetric_difference</code></p>
+                    </td>
+                    <td>
+                    <p><a href="http://en.cppreference.com/w/cpp/algorithm/set_symmetric_difference">
+                    http://en.cppreference.com/w/cpp/algorithm/set_symmetric_difference</a></p>
+                    </td>
+                    <td>
+                    <p>parallel</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>set_union</code></p>
+                    </td>
+                    <td>
+                    <p><a href="http://en.cppreference.com/w/cpp/algorithm/set_union">
+                    http://en.cppreference.com/w/cpp/algorithm/set_union</a></p>
+                    </td>
+                    <td>
+                    <p>parallel</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>sort</code></p>
+                    </td>
+                    <td>
+                    <p><a href="http://en.cppreference.com/w/cpp/algorithm/sort">
+                    http://en.cppreference.com/w/cpp/algorithm/sort</a></p>
+                    </td>
+                    <td>
+                    <p>parallel</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>stable_sort</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/stable_sort">
+                    http://en.cppreference.com/w/cpp/algorithm/stable_sort</a></p>
+                    </td>
+                    <td>
+                    <p>parallel</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>stable_partition</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/stable_partition">
+                    http://en.cppreference.com/w/cpp/algorithm/stable_partition</a></p>
+                    </td>
+                    <td>
+                    <p>parallel</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>swap_ranges</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/swap_ranges">
+                    http://en.cppreference.com/w/cpp/algorithm/swap_ranges</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>transform</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/transform">
+                    http://en.cppreference.com/w/cpp/algorithm/transform</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>transform_exclusive_scan</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/transform_exclusive_scan">
+                    http://en.cppreference.com/w/cpp/algorithm/transform_exclusive_scan</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>transform_inclusive_scan</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/transform_inclusive_scan">
+                    http://en.cppreference.com/w/cpp/algorithm/transform_inclusive_scan</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>transform_reduce</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/transform_reduce">
+                    http://en.cppreference.com/w/cpp/algorithm/transform_reduce</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>uninitialized_copy</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/memory/uninitialized_copy">
+                    http://en.cppreference.com/w/cpp/memory/uninitialized_copy</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>uninitialized_copy_n</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/memory/uninitialized_copy_n">
+                    http://en.cppreference.com/w/cpp/memory/uninitialized_copy_n</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>uninitialized_default_construct</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/memory/uninitialized_default_construct">
+                    http://en.cppreference.com/w/cpp/memory/uninitialized_default_construct</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>uninitialized_default_construct_n</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/memory/uninitialized_default_construct_n">
+                    http://en.cppreference.com/w/cpp/memory/uninitialized_default_construct_n</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>uninitialized_fill</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/memory/uninitialized_fill">
+                    http://en.cppreference.com/w/cpp/memory/uninitialized_fill</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>uninitialized_fill_n</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/memory/uninitialized_fill_n">
+                    http://en.cppreference.com/w/cpp/memory/uninitialized_fill_n</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>uninitialized_move</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/memory/uninitialized_move">
+                    http://en.cppreference.com/w/cpp/memory/uninitialized_move</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>uninitialized_move_n</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/memory/uninitialized_move_n">
+                    http://en.cppreference.com/w/cpp/memory/uninitialized_move_n</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>uninitialized_value_construct</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/memory/uninitialized_value_construct">
+                    http://en.cppreference.com/w/cpp/memory/uninitialized_value_construct</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>uninitialized_value_construct_n</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/memory/uninitialized_value_construct_n">
+                    http://en.cppreference.com/w/cpp/memory/uninitialized_value_construct_n</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>unique</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/unique">
+                    http://en.cppreference.com/w/cpp/algorithm/unique</a></p>
+                    </td>
+                    <td>
+                    <p>parallel</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <p><code>unique_copy</code></p>
+                    </td>
+                    <td>
+                    <p>
+                    <a href="http://en.cppreference.com/w/cpp/algorithm/unique_copy">
+                    http://en.cppreference.com/w/cpp/algorithm/unique_copy</a></p>
+                    </td>
+                    <td>
+                    <p>parallel, unsequenced</p>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+            <div id="limitations">
+                <h2>Known limitations</h2>
+                <p><code>unseq</code> and <code>par_unseq</code> policies only have effect with compilers that
+                support <code>#pragma omp simd</code> or <code>#pragma simd</code>.</p>
+                <p> Parallel and vector execution is only supported for most algorithms if random access iterators are provided,
+                while for other iterator types the execution will remain serial, excepting <code>for_each</code> and <code>transform</code> which support parallel execution with forward iterators as well.<br/>
+                In case of forward iterators an execution of the invoked function should have enough work for the parallel execution to be effective.</p>
+                <p>Semantics of the following algorithms does not allow unsequenced execution: <code>includes, inplace_merge, merge, set_difference, set_intersection, set_symmetric_difference, set_union, stable_partition, unique</code></p>
+                <p>The initial value type for <code>exclusive_scan, inclusive_scan, transform_exclusive_scan, transform_inclusive_scan</code> shall satisfy the <code>DefaultConstructible</code> requirements. A default-constructed instance of the initial value type shall be the identity element for <code>binary_op</code>.</p>
+                <p>For <code>max_element, min_element, minmax_element, partial_sort, partial_sort_copy, sort, stable_sort</code> the dereferenced value type of the provided iterators shall be <code>DefaultConstructible</code>.</p>
+                <p>For <code>remove, remove_if, unique</code> the dereferenced value type of the provided iterators shall be <code>MoveConstructible</code>.</p>
+                <p>The following algorithms require additional O(n) memory space for parallel execution: <code>copy_if, inplace_merge, partial_sort, partial_sort_copy, partition_copy, remove, remove_if, rotate, sort, stable_sort, unique, unique_copy</code>.</p>
+            </div>
+            <div id="legal">
+            <h2>Legal Information</h2>
+            <table class="tablecontrol">
+                <tbody>
+                    <tr>
+                        <th>Optimization Notice</th>
+                    </tr>
+                    <tr>
+                        <td>Intel's compilers may or may not optimize to the same degree for non-Intel microprocessors for optimizations that are not unique to Intel microprocessors.
+                        These optimizations include SSE2, SSE3, and SSSE3 instruction sets and other optimizations. Intel does not guarantee the availability, functionality, or effectiveness
+                        of any optimization on microprocessors not manufactured by Intel. Microprocessor-dependent optimizations in this product are intended for use with Intel microprocessors.
+                        Certain optimizations not specific to Intel microarchitecture are reserved for Intel microprocessors. Please refer to the applicable product User and Reference Guides
+                        for more information regarding the specific instruction sets covered by this notice.
+                        Notice revision #20110804
+                         </td>
+                     </tr>
+                </tbody>
+            </table>
+
+            <p>Intel and the Intel logo are trademarks of Intel Corporation in the U.S. and/or other countries.
+            <br>
+            * Other names and brands may be claimed as the property of others.
+            <br>
+            <b>Copyright 2017-2020 Intel Corporation.</b><p>This software and the related documents are Intel copyrighted materials, and your use of them is governed by the express license under which they were provided to you (License). Unless the License provides otherwise, you may not use, modify, copy, publish, distribute, disclose or transmit this software or the related documents without Intel's prior written permission.</p>
+            <p>This software and the related documents are provided as is, with no express or implied warranties, other than those that are expressly stated in the License.</p>
+
+            </p>
+        </div>
+        </div>
+    </body>
+</html>
