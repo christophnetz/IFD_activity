@@ -17,15 +17,6 @@
 using namespace cine2;
 using namespace std;
 
-//
-//struct cell {
-//  cell() {}
-//  cell(double resource, double risk) : resource(resource), risk(risk) {}
-//
-//  double resource;
-//  double risk;
-//};
-
 
 template <typename T>
 class Grid {
@@ -135,8 +126,6 @@ void ind::mutate(bernoulli_distribution& mrate, normal_distribution<double>& msh
     act = max(act, 0.0);
   }
 
-
-
   if (mrate(rnd::reng)) {
     comp += mshape(rnd::reng);
     comp = max(comp, 0.1);  // Can't be 0, better way to implement?
@@ -228,15 +217,13 @@ void simulation(const Param& param_) {
     rnd::reng.seed(param_.seed);
 
 
-
+  //Output filestreams
   std::ofstream ofs1(param_.outdir + "activities.txt", std::ofstream::out);
   std::ofstream ofs2(param_.outdir + "ecology.txt", std::ofstream::out);
   std::ofstream ofs3(param_.outdir + "comp.txt", std::ofstream::out);
   std::ofstream ofs5(param_.outdir + "_landscape.txt", std::ofstream::out);
 
   ofs5 << "gen\tscene\ttime\tcomp\tact\txpos\typos\tfood\tintake\n";
-
-
   ofs2 << "G" << "\t" << "ifd_prop" << "\t" << "time_to_IFD" << "\t" << "sd_intake" << "\t\n";
 
 
@@ -248,7 +235,7 @@ void simulation(const Param& param_) {
   landscape_t landscape(param_.dims);
 
 
-
+  //Population initialization
   vector<ind> pop;
   vector<ind> tmp_pop(param_.pop_size);
   auto pdist = std::uniform_int_distribution<int>(0, param_.dims - 1);
@@ -259,26 +246,35 @@ void simulation(const Param& param_) {
   auto rdist = cached_rdist(100'000);
   vector<double> activities;
 
+
+  // Generation loop
   for (int g = 0; g < param_.G; ++g) {
+
+    // Create gillespie loop
     activities.clear();
     for (int i = 0; i < pop.size(); ++i) {
       activities.push_back(pop[i].act);
     }
-    activities.push_back(param_.changerate);
+    activities.push_back(param_.changerate); // Add rate of environmental change
     rdist.mutate(activities.cbegin(), activities.cend());
     double total_act = std::accumulate(activities.begin(), activities.end(), 0.0);
     auto event_dist = cached_exponential(total_act, 100'000);
 
-    double ifd_prop = 0.0;
-    double total_ttIFD = 0.0;
-    double total_sdintake = 0.0;
 
+
+    // Update presences
     presence_t presence(param_.dims, 0.0);
     for (int i = 0; i < pop.size(); ++i) {
       presence(pop[i].xpos, pop[i].ypos) += pop[i].comp;
     }
+
+    // Set up new landscape
     landscape_setup(landscape, param_);
 
+    //Some variables
+    double ifd_prop = 0.0;
+    double total_ttIFD = 0.0;
+    double total_sdintake = 0.0;
     double time = 0.0;
     int id;
     int eat_t = 0;
@@ -291,20 +287,18 @@ void simulation(const Param& param_) {
 
     for (; time < param_.t_scenes; ) {
       ++tot_iter;
-      time += event_dist();
+      time += event_dist(); // time to next event
 
       while (time > eat_t) { // alternative: individuals eat continuously. Maybe let's not
+        
+        ++eat_t;
+
         for (int p = 0; p < pop.size(); ++p) {
             pop[p].food += landscape(pop[p].xpos, pop[p].ypos) * pop[p].comp / presence(pop[p].xpos, pop[p].ypos);
         }
 
-
-
-        ++eat_t;
-
-
+        // landscape output in last generation
         if (g == param_.G - 1) {
-
 
           for (int i = 0; i < pop.size(); ++i) {
 
@@ -315,24 +309,31 @@ void simulation(const Param& param_) {
         }
       }
 
+      // Choose which ind moves
       id = rdist();
-      if (id == pop.size())
+      if (id == pop.size()) //if last one, environmental change counter is incremented
         ++count;
 
-      else if (!IFD_reached) {
+      else if (!IFD_reached) { //otherwise, and if IFD is not reached yet, let individual move
 
         pop[id].move(landscape, presence, param_, iota_sampler());
 
+        // IFD checking in certain intervalls, costly and to be omitted?
         if (time > it_t) {
           IFD_reached = check_IFD(pop, landscape, presence);
           time_to_IFD = time;
           it_t = floor(time / increment) * increment + increment;
         }
       }
+
+      //Change landscape
       if (count == param_.alpha)
       {
+        //resetting
         IFD_reached = false;
         count = 0;
+
+        //nr of cells to change
         int nrcells = static_cast<int>(round(param_.dims * param_.dims * param_.changeprop));
 
         const auto& iota = iota_sampler();
