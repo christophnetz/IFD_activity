@@ -44,7 +44,7 @@ public:
   // conversion linear <-> 2D
   size_t linear_idx(int x, int y) const noexcept { return size_t(x) * dim_ + y; }
   std::pair<int, int> coor(size_t idx) const noexcept {
-    return { static_cast<int>(idx) % dim_, static_cast<int>(idx) / dim_ };
+    return { static_cast<int>(idx) / dim_, static_cast<int>(idx) % dim_ };
   }
 
 private:
@@ -172,6 +172,7 @@ void ind::springoff(const ind& parent) {
   act = parent.act;
   comp = parent.comp;
   bold = parent.bold;
+  food = 0.0;
 }
 
 
@@ -313,7 +314,7 @@ void simulation(const Param& param_) {
 
     presence_t presence(param_.dims, 0.0);
     for (int i = 0; i < pop.size(); ++i) {
-      presence(pop[i].xpos, pop[i].ypos) = pop[i].comp;
+      presence(pop[i].xpos, pop[i].ypos) += pop[i].comp;
     }
     landscape_setup(landscape, param_);
 
@@ -374,6 +375,7 @@ void simulation(const Param& param_) {
       }
       if (count == param_.alpha)
       {
+        IFD_reached = false;
         count = 0;
         int nrcells = static_cast<int>(round(param_.dims * param_.dims * param_.changeprop));
 
