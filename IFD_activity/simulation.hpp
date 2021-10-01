@@ -29,8 +29,8 @@ struct cell {
 template <typename T>
 class Grid {
 public:
-  explicit Grid(int dim) : dim_(dim), buf_(size_t(dim) * dim) {}
-  Grid(int dim, const T& val) : dim_(dim), buf_(size_t(dim) * dim, val) {}
+  explicit Grid(int dim) : dim_(dim), buf_(size_t(dim)* dim) {}
+  Grid(int dim, const T& val) : dim_(dim), buf_(size_t(dim)* dim, val) {}
 
   // access to underlying linear buffer
   const auto& buf() const noexcept { return buf_; }
@@ -112,31 +112,19 @@ void ind::move(const landscape_t& landscape, presence_t& presence, Param param_,
     int former_xpos = xpos;
     int former_ypos = ypos;
 
-    //std::uniform_real_distribution<double>error (0.0, 1.0);
-    size_t newidx = std::uniform_int_distribution<size_t>(0, landscape.buf().size() - 1)(rnd::reng);
-    //for (int i = 0; i < landscape.size(); ++i) {
-    //  for (int j = 0; j < landscape[i].size(); ++j) {
-        potential_intake = landscape.buf()[newidx].resource * comp / (presence.buf()[newidx] + comp);
-        if (present_intake < potential_intake) {
-          present_intake = potential_intake;
-          const auto newpos = landscape.coor(newidx);
-          xpos = newpos.first;
-          ypos = newpos.second;
-        }
-    //  }
-    //}
+    auto bestidx = landscape.linear_idx(xpos, ypos);
+    for (int i = 0; i < param_.nrexplore; ++i) {
+      const auto idx = iota[i];
+      potential_intake = landscape.buf()[idx].resource * comp / (presence.buf()[idx] + comp);
+      if (present_intake < potential_intake) {
+        present_intake = potential_intake;
+        bestidx = idx;
+      }
 
-
-        auto bestidx = landscape.linear_idx(xpos, ypos);
-        for (int i = 0; i < param_.nrexplore; ++i) {
-          const auto idx = iota[i];
-          potential_intake = landscape.buf()[idx].resource * comp / (presence.buf()[idx] + comp);
-          if (present_intake < potential_intake) {
-            present_intake = potential_intake;
-            bestidx = idx;
-          }
-
-        }
+    }
+    const auto newpos = landscape.coor(bestidx);
+    xpos = newpos.first;
+    ypos = newpos.second;
     presence.buf()[bestidx] += comp;
     presence(former_xpos, former_ypos) -= comp;
   }
@@ -211,19 +199,19 @@ double intake_variance(const vector<ind>& pop, const landscape_t& landscape, con
   };
   const double sum = std::accumulate(pop.cbegin(), pop.cend(), 0.0, [&](double s, const ind& i) {
     return s + lambda(i);
-  });
+    });
   const auto mean = sum / pop.size();
   const double accum = std::accumulate(pop.cbegin(), pop.cend(), 0.0, [&](double s, const ind& i) {
     const auto val = lambda(i);
     return s + (val - mean) * (val - mean);
-  });
+    });
   return sqrt(accum / pop.size());
 }
 
 void landscape_setup(landscape_t& landscape, Param param_) {
   for (cell& c : landscape.buf()) {
-      c = cell(uniform_real_distribution<double>(param_.resource_min, param_.resource_max)(rnd::reng),
-        /*exponential_distribution<double>(param_.riskspread)(rnd::reng)*/0.0);
+    c = cell(uniform_real_distribution<double>(param_.resource_min, param_.resource_max)(rnd::reng),
+      /*exponential_distribution<double>(param_.riskspread)(rnd::reng)*/0.0);
   }
 }
 
@@ -241,7 +229,7 @@ void reproduction(vector<ind>& pop, vector<ind>& tmp_pop, const Param& param_) {
   rndutils::mutable_discrete_distribution<int, rndutils::all_zero_policy_uni> rdist;
   rdist.mutate_transform(pop.cbegin(), pop.cend(), [&](const ind& i) {
     return max(0.0, i.food - param_.cost * i.act * param_.t_scenes - param_.cost_comp * i.comp * param_.t_scenes);
-  });
+    });
 
   uniform_int_distribution<int> pdist(0, param_.dims - 1);
   bernoulli_distribution mrate(param_.mutation_rate);
@@ -303,7 +291,7 @@ void simulation(const Param& param_) {
       activities.push_back(pop[i].act);
       //presence[pop[i].xpos][pop[i].ypos] += pop[i].comp;
     }
-    activities.push_back(param_.changerate); 
+    activities.push_back(param_.changerate);
     rdist.mutate(activities.cbegin(), activities.cend());
     double total_act = std::accumulate(activities.begin(), activities.end(), 0.0);
     exponential_distribution<double> event_dist(total_act);
@@ -361,12 +349,12 @@ void simulation(const Param& param_) {
       id = rdist(rnd::reng);
       if (id == pop.size())
         ++count;
-      
+
       else if (!IFD_reached) {
         //int xpos = pdist(rnd::reng);
         //int ypos = pdist(rnd::reng);
         pop[id].move(landscape, presence, param_, iota_sampler(rnd::reng));
-        
+
         if (time > it_t) {
           IFD_reached = check_IFD(pop, landscape, presence);
           time_to_IFD = time;
@@ -406,7 +394,7 @@ void simulation(const Param& param_) {
       ofs1 << "\n";
       ofs3 << "\n";
       ofs4 << "\n";
-      ofs2 << g << "\t" << ifd_prop << "\t" << total_ttIFD << "\t" << total_sdintake  << "\t\n";
+      ofs2 << g << "\t" << ifd_prop << "\t" << total_ttIFD << "\t" << total_sdintake << "\t\n";
     }
 
     reproduction(pop, tmp_pop, param_);
