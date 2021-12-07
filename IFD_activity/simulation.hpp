@@ -121,10 +121,10 @@ void ind::move(const landscape_t& landscape, presence_t& presence, Param param_,
 
 void ind::mutate(bernoulli_distribution& mrate, normal_distribution<double>& mshape) {
 
-  if (mrate(rnd::reng)) {
-    act += mshape(rnd::reng);
-    act = max(act, 0.0);
-  }
+  //if (mrate(rnd::reng)) {
+  //  act += mshape(rnd::reng);
+  //  act = max(act, 0.0);
+  //}
 
   if (mrate(rnd::reng)) {
     comp += mshape(rnd::reng);
@@ -223,7 +223,7 @@ void simulation(const Param& param_) {
   std::ofstream ofs3(param_.outdir + "comp.txt", std::ofstream::out);
   std::ofstream ofs5(param_.outdir + "_landscape.txt", std::ofstream::out);
 
-  ofs5 << "gen\tscene\ttime\tcomp\tact\txpos\typos\tfood\tintake\n";
+  ofs5 << "gen\ttime\tlastchange\tcomp\tact\txpos\typos\tfood\tintake\n";
   ofs2 << "G" << "\t" << "ifd_prop" << "\t" << "time_to_IFD" << "\t" << "sd_intake" << "\t\n";
 
 
@@ -277,13 +277,14 @@ void simulation(const Param& param_) {
     double total_sdintake = 0.0;
     double time = 0.0;
     int id;
-    int eat_t = 0;
+    double eat_t = 0.0;
     double it_t = 0.0;
     double increment = 0.1;
     bool IFD_reached = false;
     double time_to_IFD = 0.0;
     int count = 0;
     size_t tot_iter = 0;
+    double last_change = 0.0;
 
     for (; time < param_.t_scenes; ) {
       ++tot_iter;
@@ -291,7 +292,6 @@ void simulation(const Param& param_) {
 
       while (time > eat_t) { // alternative: individuals eat continuously. Maybe let's not
         
-        ++eat_t;
 
         for (int p = 0; p < pop.size(); ++p) {
             pop[p].food += landscape(pop[p].xpos, pop[p].ypos) * pop[p].comp / presence(pop[p].xpos, pop[p].ypos);
@@ -302,11 +302,14 @@ void simulation(const Param& param_) {
 
           for (int i = 0; i < pop.size(); ++i) {
 
-            ofs5 << g << "\t" << eat_t << "\t" << pop[i].comp << "\t" << pop[i].act << "\t" << pop[i].xpos << "\t"
+            ofs5 << g << "\t" << eat_t<< "\t" << last_change << "\t" << pop[i].comp << "\t" << pop[i].act << "\t" << pop[i].xpos << "\t"
               << pop[i].ypos << "\t" << pop[i].food << "\t" << pop[i].updateintake(landscape, presence) << "\n";
 
           }
         }
+
+        eat_t += 1.0;
+
       }
 
       // Choose which ind moves
@@ -332,6 +335,7 @@ void simulation(const Param& param_) {
         //resetting
         IFD_reached = false;
         count = 0;
+        last_change = time;
 
         //nr of cells to change
         int nrcells = static_cast<int>(round(param_.dims * param_.dims * param_.changeprop));

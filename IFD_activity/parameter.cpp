@@ -98,6 +98,7 @@ namespace cine2 {
     stream(mutation_shape);
     stream(cost);
     stream(cost_comp);
+    stream(changerate);
     stream(changeprop);
     stream(seed);
 
