@@ -6,7 +6,7 @@ library(tidyverse)
 setwd("C:/Users/user/Desktop/IFDxpersonality/IFD_activity/IFD_activity")
 
 
-strID <- "Evol13"
+strID <- "Evol12"
 # 
 # str1 <- paste0(strID,"activities")
 # data <- read.table(paste0(str1, ".txt"), sep="\t", header = F)
@@ -85,7 +85,7 @@ P_comp <- ggplot(data = melt(t(mtrxwP1)), aes(x=Var1, y=Var2, fill=value)) + lab
   theme(axis.title.x=element_text(size=16), axis.title.y=element_text(size=16), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),axis.line = element_line(colour = "black"), legend.position = "none")+
   scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) 
 
-P_comp 
+P_comp+xlim(c(2997, 3000)) 
 
 ggsave(paste0(str1, ".png"), P_comp, width = 6.5)
 
@@ -151,7 +151,7 @@ data <- data %>%
   left_join(select(scapedata, time, cell, resource), by=c("cell"= "cell", "time" = "time"))
 # borders need to be defined by hand (at least for now)
 
-data <- mutate(data, morph = cut(comp, c(0.0, 0.5, 0.7, 1.0, 1.17, 2.0), labels = paste0("morph", 1:5)))
+data <- mutate(data, morph = cut(comp, c(0.0, 0.6, 0.8, 1.0, 1.2, 2.0), labels = paste0("morph", 1:5)))
   
 morphs <- data %>%
   group_by(time, morph) %>%
@@ -227,6 +227,10 @@ plotRB <- ggplot(filter(scapedata, time < 5), aes(x = resource, y = sumcomp))+
   geom_point()+geom_point(aes(x = resource, y = count), colour="red")+facet_wrap(~time)+
   labs(y="individuals || competitiveness")
 
+ggplot(filter(scapedata, time < 5), aes(x = resource, y = sumcomp/count))+
+  geom_point()+facet_wrap(~time)+
+  labs(y="avg. competitiveness")
+
 ggsave(paste0(str1, "_RB.png"), plotRB, width = 6.5)
 
 
@@ -234,10 +238,6 @@ ggsave(paste0(str1, "_RB.png"), plotRB, width = 6.5)
 #across different timesteps and scenes
 ggplot(scapedata, aes(x = resource, y = sdcomp, colour = time))+
   geom_point()+facet_wrap(~scene)
-
-
-
-
 
 
 
@@ -257,10 +257,11 @@ ggplot(morphs, aes(time, average, colour = morph))+
 ggplot(filter(morphs, time < 18), aes(x = time, y = average, group = morph, colour = morph))+
   geom_line()
 
-intakeplot <- ggplot(morphs, aes(x = timesincechange2 -1, y = average, group = morph, colour = morph))+
-  geom_smooth()+labs(x="time since change", y = "average intake")
+intakeplot <- ggplot(morphs, aes(x = timesincechange2 -1, y = average, group = meancomp, colour = as.factor(round(meancomp, digits = 2))))+
+  geom_smooth(se = FALSE)+ geom_point( alpha = 1/5, shape = 16)+labs(x="time since change", y = "average intake") + 
+  guides(colour=guide_legend(title="competitive ability"))
 
-ggsave(paste0(str1, "_intake.png"), intakeplot, width = 6.5)
+ggsave(paste0(strID, "_intake.png"), intakeplot, width = 6.5)
 
 
 ###Conclusions: What is happening?
