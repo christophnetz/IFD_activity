@@ -6,7 +6,7 @@ library(tidyverse)
 setwd("C:/Users/user/Desktop/IFDxpersonality/IFD_activity/IFD_activity")
 
 
-strID <- "Evol12"
+strID <- "Evol16"
 # 
 # str1 <- paste0(strID,"activities")
 # data <- read.table(paste0(str1, ".txt"), sep="\t", header = F)
@@ -58,8 +58,8 @@ colnames(df) <- data$V1
 length(df[1,])
 
 minwv = 0.0;     # minimal (weight) value
-maxwv = 2.0;     # maximal (weight) value
-steps = 200;  # num. of bins across range
+maxwv = 1.2;     # maximal (weight) value
+steps = 200;     # num. of bins across range
 stepsize = (maxwv - minwv)/steps  # bin range size
 
 
@@ -85,7 +85,7 @@ P_comp <- ggplot(data = melt(t(mtrxwP1)), aes(x=Var1, y=Var2, fill=value)) + lab
   theme(axis.title.x=element_text(size=16), axis.title.y=element_text(size=16), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),axis.line = element_line(colour = "black"), legend.position = "none")+
   scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) 
 
-P_comp+xlim(c(2997, 3000)) 
+P_comp #+ ylim(0.40, 0.6)
 
 ggsave(paste0(str1, ".png"), P_comp, width = 6.5)
 
@@ -228,6 +228,10 @@ plotRB <- ggplot(filter(scapedata, time < 5), aes(x = resource, y = sumcomp))+
   labs(y="individuals || competitiveness")
 
 ggplot(filter(scapedata, time < 5), aes(x = resource, y = sumcomp/count))+
+  geom_point()+facet_wrap(~time)+
+  labs(y="avg. competitiveness")
+
+ggplot(filter(scapedata, time < 5), aes(x = resource, y = resource/sumcomp))+
   geom_point()+facet_wrap(~time)+
   labs(y="avg. competitiveness")
 

@@ -194,6 +194,8 @@ void reproduction(vector<ind>& pop, vector<ind>& tmp_pop, const Param& param_) {
   rndutils::mutable_discrete_distribution<int, rndutils::all_zero_policy_uni> rdist;
   rdist.mutate_transform(pop.cbegin(), pop.cend(), [&](const ind& i) {
     return max(0.0, i.food - param_.cost * i.act * param_.t_scenes - param_.cost_comp * i.comp * param_.t_scenes);
+    //return max(0.0, i.food - param_.cost * i.act * param_.t_scenes - param_.cost_comp * (exp(i.comp) - 1.0) * param_.t_scenes);
+    //return max(0.0, (i.food * (1.0 - i.comp)));//  - param_.cost * i.act * param_.t_scenes - param_.cost_comp * (exp(0.7 * i.comp) - 1.0) * param_.t_scenes);
     });
 
   uniform_int_distribution<int> pdist(0, param_.dims - 1);
@@ -240,7 +242,7 @@ void simulation(const Param& param_) {
   vector<ind> tmp_pop(param_.pop_size);
   auto pdist = std::uniform_int_distribution<int>(0, param_.dims - 1);
   for (int i = 0; i < param_.pop_size; ++i) {
-    pop.emplace_back(pdist(rnd::reng), pdist(rnd::reng), 0.5, 1);
+    pop.emplace_back(pdist(rnd::reng), pdist(rnd::reng), 0.5, 0.8);
   }
   auto iota_sampler = cached_iota(landscape.buf().size(), 100'000);
   auto rdist = cached_rdist(100'000);
