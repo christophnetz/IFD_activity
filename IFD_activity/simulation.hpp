@@ -193,8 +193,8 @@ void reproduction(vector<ind>& pop, vector<ind>& tmp_pop, const Param& param_) {
 
   rndutils::mutable_discrete_distribution<int, rndutils::all_zero_policy_uni> rdist;
   rdist.mutate_transform(pop.cbegin(), pop.cend(), [&](const ind& i) {
-    return max(0.0, i.food - param_.cost * i.act * param_.t_scenes - param_.cost_comp * i.comp * param_.t_scenes);
-    //return max(0.0, i.food - param_.cost * i.act * param_.t_scenes - param_.cost_comp * (exp(i.comp) - 1.0) * param_.t_scenes);
+    return max(0.0, 0.05 + i.food - param_.cost * i.act * param_.t_scenes - param_.cost_comp * i.comp * param_.t_scenes);
+    //return max(0.0, i.food - param_.cost * i.act * param_.t_scenes - param_.cost_comp * (exp(0.7*i.comp) - 1.0) * param_.t_scenes);
     //return max(0.0, (i.food * (1.0 - i.comp)));//  - param_.cost * i.act * param_.t_scenes - param_.cost_comp * (exp(0.7 * i.comp) - 1.0) * param_.t_scenes);
     });
 
@@ -265,7 +265,9 @@ void simulation(const Param& param_) {
 
 
     // Update presences
-    presence_t presence(param_.dims, 0.0);
+    presence_t presenceNull(param_.dims, 0.0);
+
+    presence_t presence = presenceNull;
     for (int i = 0; i < pop.size(); ++i) {
       presence(pop[i].xpos, pop[i].ypos) += pop[i].comp;
     }
@@ -293,9 +295,9 @@ void simulation(const Param& param_) {
       time += event_dist(); // time to next event
 
       while (time > eat_t) { // alternative: individuals eat continuously. Maybe let's not
-        
 
         for (int p = 0; p < pop.size(); ++p) {
+
             pop[p].food += landscape(pop[p].xpos, pop[p].ypos) * pop[p].comp / presence(pop[p].xpos, pop[p].ypos);
         }
 
