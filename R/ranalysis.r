@@ -6,7 +6,7 @@ library(tidyverse)
 setwd("C:/Users/user/Desktop/IFDxpersonality/IFD_activity/IFD_activity")
 
 
-strID <- "change0n01"
+strID <- "Evol12"
 # 
 # str1 <- paste0(strID,"activities")
 # data <- read.table(paste0(str1, ".txt"), sep="\t", header = F)
@@ -87,7 +87,7 @@ P_comp <- ggplot(data = melt(t(mtrxwP1)), aes(x=Var1, y=Var2, fill=value)) + lab
 
 P_comp
 
-ggsave(paste0(str1, ".png"), P_comp, width = 6.5)
+ggsave(paste0(str1, ".png"), P_comp, width = 15, height = 5.5, units = "cm")
 
 P_comp1 <- P_comp
 
@@ -195,11 +195,15 @@ ggplot(filter(data.new, time == 3), aes(resource, comp))+
 
 complevels <- round(with(data, tapply(comp, morph, mean)), digits = 2)
 
-P_spat <- ggplot(filter(data.new, time < 9), aes(resource, morph, colour = morph))+
+P_spat <- ggplot(filter(data.new, time == c(1,8) ), aes(resource, morph, colour = morph))+
+  geom_boxplot(alpha = 0.05)+facet_wrap(~time, labeller = label_both) + scale_y_discrete(labels = complevels)+
+  theme_bw()+theme(legend.position = "none", axis.text.x= element_text(size = 6))+labs(x="resource abundance", y="competitive type")
+
+P_spat <- ggplot(filter(data.new, time < 9 ), aes(resource, morph, colour = morph))+
   geom_boxplot(alpha = 0.05)+facet_wrap(~time, labeller = label_both, ncol = 4) + scale_y_discrete(labels = complevels)+
   theme_bw()+theme(legend.position = "none", axis.text.x= element_text(size = 6))+labs(x="resource abundance", y="competitive type")
 
-ggsave(paste0(strID, "_spat.png"), P_spat, width = 6.5)
+ggsave(paste0(strID, "_spat2.png"), P_spat, width = 6.5)
 
 ######################
 
@@ -277,6 +281,22 @@ intakeplot <- ggplot(morphs, aes(x = timesincechange2 -1, y = average, group = m
 
 ggsave(paste0(strID, "_intake.png"), intakeplot, width = 6.5)
 
+morphs <- morphs %>% 
+  mutate(
+    timecut = ifelse(timesincechange2 < 2, 0, 1)
+         
+  )
+
+
+intakeplot2 <-  ggplot(morphs, aes(x = as.factor(timecut), y = average - meancomp  * 0.005 , colour = as.factor(round(meancomp, digits = 2))))+
+  geom_boxplot( )+labs(x="", y = "average net intake") + 
+  guides(colour=guide_legend(title="competitive ability"))+theme_bw()+
+   scale_x_discrete(labels=c("0" = "After change", "1" = "At IFD"))
+
+
+ ggsave(paste0(strID, "_intake2.png"), intakeplot2, width = 6.5)
+
+
 
 ###Conclusions: What is happening?
 # Polymorphisms are driven by the interplay between spatial assortment within scenes, 
@@ -316,7 +336,7 @@ ggsave("concept_c.png", p, width = 11, height = 8.11, units = "cm")
 
 ############################
 
-strID <- c("change0", "change0n01",  "change0n05", "change0n1", "change1", 
+strID <- c("change0", "change0n01",  "change0n05", "change0n1", "change0n25", "change1", 
            "change2n5", "change5", "change10")
 
 
@@ -336,7 +356,7 @@ for (i in 1:length(strID)){
   
 }
 
-ggplot(data = melt(t(mtrxwP1)), aes(x=as.factor(Var1), y=Var2, fill=value)) + labs(x="rate of change", y="competitive ability") + 
+fig1B <- ggplot(data = melt(t(mtrxwP1)), aes(x=as.factor(Var1), y=Var2, fill=value)) + labs(x="rate of change", y="competitive ability") + 
   geom_tile() + scale_fill_gradientn(colours = colorRampPalette(c("white", "red", "blue"))(3), 
                                      values = c(0, 0.05 , 1), space = "Lab", guide = FALSE) + geom_hline(yintercept = 0)+ theme_bw() +
   theme(axis.title.x=element_text(size=12), axis.title.y=element_text(size=12), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),axis.line = element_line(colour = "black"), legend.position = "none")+
@@ -345,4 +365,6 @@ ggplot(data = melt(t(mtrxwP1)), aes(x=as.factor(Var1), y=Var2, fill=value)) + la
 
 
 
-colnames(mtrxwP1) <- c("0","0.01", "0.05", "0.1", "1", "2.5", "5", "10")
+colnames(mtrxwP1) <- c("0","0.01", "0.05", "0.1", "0.25","1", "2.5", "5", "10")
+
+ggsave("fig1B.png", fig1B, width = 15, height = 5.5, units = "cm")
