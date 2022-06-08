@@ -6,45 +6,7 @@ library(tidyverse)
 setwd("C:/Users/user/Desktop/IFDxpersonality/IFD_activity/IFD_activity")
 
 
-strID <- "Evol12"
-# 
-# str1 <- paste0(strID,"activities")
-# data <- read.table(paste0(str1, ".txt"), sep="\t", header = F)
-# 
-# df <- (t(subset(data, select = -c(V1, V1002))))
-# colnames(df) <- data$V1
-# 
-# length(df[1,])
-# 
-# minwv = 0.0;     # minimal (weight) value
-# maxwv = 2.0;     # maximal (weight) value
-# steps = 101;  # num. of bins across range
-# stepsize = (maxwv - minwv)/steps  # bin range size
-# 
-# 
-# #Frequency matrix:
-# 
-# mtrxwP1 <- matrix(nrow = steps, ncol = length(df[1,]), dimnames=list(seq(minwv+stepsize, maxwv, stepsize)))  # Frequency matrix
-# vecFpos <- vector()
-# 
-# for (i in 1:length(df[1,])){
-#   
-#   vecFpos[i] = length(which(df[,i] > 0.05))/length(df[,1])
-#   
-#   mtrxwP1[,i] = table(cut(df[,i], seq(minwv, maxwv, stepsize), right=T))/1000
-#   
-# }
-# 
-# colnames(mtrxwP1) <- data$V1
-# 
-# 
-# P_act <- ggplot(data = melt(t(mtrxwP1)), aes(x=Var1, y=Var2, fill=value)) + labs(x="generations", y="activity") + 
-#   geom_tile() + scale_fill_gradientn(colours = colorRampPalette(c("white", "red", "blue"))(3), 
-#                                      values = c(0, 0.05 , 1), space = "Lab", guide = FALSE) + geom_hline(yintercept = 0)+ theme_bw() +
-#   theme(axis.title.x=element_text(size=16), axis.title.y=element_text(size=16), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),axis.line = element_line(colour = "black"), legend.position = "none")
-# P_act
-
-#ggsave(paste0(str1, ".png"), P_act)
+strID <- "run1"
 
 ### Competitiveness
 
@@ -85,7 +47,11 @@ P_comp <- ggplot(data = melt(t(mtrxwP1)), aes(x=Var1, y=Var2, fill=value)) + lab
   theme(axis.title.x=element_text(size=12), axis.title.y=element_text(size=12), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),axis.line = element_line(colour = "black"), legend.position = "none")+
   scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) 
 
-P_comp
+P_comp+geom_hline(yintercept=1.25)+geom_hline(yintercept=1.0)+
+  geom_hline(yintercept=0.7) +
+  geom_hline(yintercept=0.58)+  geom_hline(yintercept=0.45)
+
+
 
 ggsave(paste0(str1, ".png"), P_comp, width = 15, height = 5.5, units = "cm")
 
@@ -99,35 +65,6 @@ figure <- ggarrange(P_comp1+ font("x.text", size = 8)+font("xlab", size = 12), P
 ggsave(paste0(strID, "2.png"), figure, width = 15, height = 10, units = "cm")
 
 
-##############################################
-library(ggpubr)
-figure <- ggarrange(P_act+ rremove("x.text") + rremove("xlab"), P_comp+ rremove("x.text") + rremove("xlab"),
-          P_bold, 
-          labels = c("A", "B", "C"),
-          ncol = 1, align = "")
-
-ggsave(paste0(strID, ".png"), figure, width = 29.7, height = 20.1, units = "cm")
-
-
-
-#frequencies of morphs, custom
-df_H = data.frame(data$V1, vecFpos, 1 - vecFpos)
-colnames(df_H) <- c("gens", "highact", "lowact")
-
-frequencies <- ggplot(data=df_H, aes(x=gens, y=highact, colour="weight > 0")) +
-  geom_line(colour="darkgreen")  + theme(axis.title=element_text(size=12))+ 
-  geom_line(data = df_H, aes(x = gens, y = lowact, colour="weight < 0"), colour="purple")  + 
-  labs(x="", y="Herbivore frequency", colour="")+ theme(legend.position='none') +
-  theme(panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA),  
-        axis.line = element_line(colour = "black"), axis.title.y = element_text(size = 9), axis.text=element_text(size=8))
-
-
-#####
-# IFD measures
-
-idf_data <- read.table("IDF.txt", header = T)
-
-plot(idf_data$G, idf_data$avg_ttifd)
 
 
 ######3.8.2021######
@@ -161,7 +98,7 @@ data <- data %>%
   left_join(select(scapedata, time, cell, resource), by=c("cell"= "cell", "time" = "time"))
 # borders need to be defined by hand (at least for now)
 
-data <- mutate(data, morph = cut(comp, c(0.0, 0.6, 0.8, 1.0, 1.2, 2.0), labels = paste0("morph", 1:5)))
+data <- mutate(data, morph = cut(comp, c(0.0, 0.45, 0.58, 0.7, 1.0, 1.25, 2), labels = paste0("morph", 1:6)))
   
 morphs <- data %>%
   group_by(time, morph) %>%
@@ -210,9 +147,22 @@ ggsave(paste0(strID, "_spat2.png"), P_spat, width = 6.5)
 #Final food accumulated across different competitiveness values
 ggplot(data = filter(data, time == max(time))) +geom_point(aes(x = comp, y = food))
 
+
+
+data <- data %>% left_join(
+  data %>%
+    group_by(morph) %>%
+    summarize(
+      meancomp = round(mean(comp), 2),
+    ), by="morph"
+)
+
 #final fitness values (food corrected for costs)
-ggplot(filter(data, time == max(time)), aes(morph, food - comp * 0.005 * 200))+
-  geom_violin()+ylab("fitness")
+p2 <- ggplot(filter(data, time == max(time)), aes(as.factor(meancomp), food - comp * 0.005 * 100, color = as.factor(meancomp)))+
+  geom_violin(show.legend = FALSE)+ylab("total net intake")+xlab("competitive ability")+theme_bw()
+
+
+
 
 #Population proportion
 ggplot(filter(data, time == max(time)))+
@@ -316,6 +266,13 @@ R1 <- 0.05
 R2 <- 0.03
 ct1 <- 0.40
 ct2 <- 0.08
+
+
+R1 <- 0.6
+R2 <- 0.492
+ct1 <- 60
+ct2 <- 49
+
 
 (ct1 * (R2/R1)-ct2)/(1-(R2/R1))
 
